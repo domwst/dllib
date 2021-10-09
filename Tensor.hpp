@@ -129,82 +129,6 @@ public:
         FillWith(val);
     }
 
-    constexpr TTensor& operator+=(const TTensor& other) {
-        data_ += other.data_;
-        return *this;
-    }
-
-    constexpr TTensor& operator+=(TData val) {
-        data_ += val;
-        return *this;
-    }
-
-    constexpr TTensor operator+(const TTensor& other) const {
-        return TTensor(*this) += other;
-    }
-
-    constexpr TTensor operator+(TData val) const {
-        return TTensor(*this) += val;
-    }
-
-    constexpr TTensor& operator-=(const TTensor& other) {
-        data_ -= other.data_;
-        return *this;
-    }
-
-    constexpr TTensor& operator-=(TData val) {
-        data_ -= val;
-        return *this;
-    }
-
-    constexpr TTensor operator-(const TTensor& other) const {
-        return TTensor(*this) -= other;
-    }
-
-    constexpr TTensor operator-(TData val) const {
-        return TTensor(*this) -= val;
-    }
-
-    constexpr TTensor& operator*=(const TTensor& other) {
-        data_ *= other.data_;
-        return *this;
-    }
-
-    constexpr TTensor& operator*=(TData val) {
-        data_ *= val;
-        return *this;
-    }
-
-    constexpr TTensor operator*(const TTensor& other) const {
-        return TTensor(*this) *= other;
-    }
-
-    constexpr TTensor operator*(TData val) const {
-        return TTensor(*this) *= val;
-    }
-
-    constexpr TTensor& operator/=(const TTensor& other) {
-        data_ /= other.data_;
-        return *this;
-    }
-
-    constexpr TTensor& operator/=(TData val) {
-        data_ /= val;
-        return *this;
-    }
-
-    constexpr TTensor operator/(const TTensor& other) const {
-        return TTensor(*this) /= other;
-    }
-
-    constexpr TTensor operator/(TData val) const {
-        return TTensor(*this) /= val;
-    }
-
-    constexpr TTensor operator-() const {
-        return TTensor(*this) *= TData(-1);
-    }
-
     constexpr TTensor& operator=(TData val) {
         data_ = val;
         return *this;
@@ -234,7 +158,11 @@ public:
         return data_;
     }
 
-    constexpr operator TData() const {
+    constexpr operator TData&() {
+        return data_;
+    }
+
+    constexpr operator const TData&() const {
         return data_;
     }
 
