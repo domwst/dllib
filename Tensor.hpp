@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <type_traits>
@@ -77,13 +78,6 @@ namespace helpers {
         { std::end(value) };
     };
 
-    template<std::size_t N>
-    constexpr std::enable_if_t<(N > 0), std::array<std::size_t, N>>
-    ChangeLastElement(std::array<std::size_t, N> Arr, std::size_t NewVal) {
-        Arr.back() = NewVal;
-        return Arr;
-    }
-
 
     template<class, std::array, class>
     struct MakeTensorHelper;
@@ -109,11 +103,50 @@ namespace helpers {
 
     template<class TData, std::size_t... Dims, std::size_t NewLastDim>
     struct ReplaceLastDimension<TTensor<TData, Dims...>, NewLastDim> {
-        using type = TMakeTensor<TData, ChangeLastElement(std::array{Dims...}, NewLastDim)>;
+    private:
+        static constexpr auto GetNewDims() {
+            std::array<std::size_t, sizeof...(Dims)> NewDims = {Dims...};
+            NewDims.back() = NewLastDim;
+            return NewDims;
+        }
+
+    public:
+        using type = std::enable_if_t<sizeof...(Dims) != 0, TMakeTensor<TData, GetNewDims()>>;
     };
 
     template<class T, std::size_t LastDim>
     using TReplaceLastDimension = typename ReplaceLastDimension<T, LastDim>::type;
+
+    template<class, class>
+    struct MatrixMultiplicationResult;
+
+    template<class TData, std::size_t... Dims1, std::size_t... Dims2>
+    struct MatrixMultiplicationResult<TTensor<TData, Dims1...>, TTensor<TData, Dims2...>> {
+    private:
+        constexpr static auto Dimensions1 = TTensor<TData, Dims1...>::Dimensions;
+        constexpr static auto Dimensions2 = TTensor<TData, Dims2...>::Dimensions;
+
+        constexpr static auto GetNewDims() {
+            std::array<std::size_t, Dimensions1.size() + Dimensions2.size() - 1> NewDims;
+            // std::copy(Dimensions1.begin(), Dimensions2.end(), NewDims.begin());
+            // std::copy(Dimensions2.begin() + 1, Dimensions2.end(), NewDims.begin() + Dimensions1.size());
+            // For some reasons constexpr std::copy doesn't work on my computer with clang++12
+            for (std::size_t i = 0; i < Dimensions1.size(); ++i) {
+                NewDims[i] = Dimensions1[i];
+            }
+            for (std::size_t i = 1; i < Dimensions2.size(); ++i) {
+                NewDims[i + Dimensions1.size() - 1] = Dimensions2[i];
+            }
+            return NewDims;
+        }
+
+    public:
+        using type = std::enable_if_t<Dimensions1.back() == Dimensions2.front(), TMakeTensor<TData, GetNewDims()>>;
+    };
+
+    template<class T1, class T2>
+    using TMatrixMultiplicationResult = typename MatrixMultiplicationResult<T1, T2>::type;
+
 }
 
 template<class TData>
@@ -184,6 +217,7 @@ public:
 
     static constexpr std::size_t TotalElements = ElementType::TotalElements * FirstDim;
     static constexpr std::size_t DimensionCount = sizeof...(OtherDims) + 1;
+    static constexpr std::array<std::size_t, DimensionCount> Dimensions = {FirstDim, OtherDims...};
 
     template<std::size_t N>
     using SubTensor = std::conditional_t<N == DimensionCount, TTensor, typename ElementType::template SubTensor<N>>;
@@ -453,7 +487,7 @@ template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TDat
 constexpr std::enable_if_t<(Tensor::DimensionCount > 2), void> MatrixMultiplication(
     const Tensor& tensor,
     const TTensor<TData, FromDim, ToDim>& matrix,
-    helpers::TReplaceLastDimension<Tensor, ToDim>& result) {
+    helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, FromDim, ToDim>>& result) {
 
     for (std::size_t i = 0; i < tensor.size(); ++i) {
         MatrixMultiplication(tensor[i], matrix, result[i]);
@@ -463,10 +497,10 @@ constexpr std::enable_if_t<(Tensor::DimensionCount > 2), void> MatrixMultiplicat
 template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
 constexpr std::enable_if_t<
     (Tensor::DimensionCount > 2),
-    helpers::TReplaceLastDimension<Tensor, ToDim>
+    helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, FromDim, ToDim>>
 > MatrixMultiplication(const Tensor& tensor, const TTensor<TData, FromDim, ToDim>& matrix) {
 
-    helpers::TReplaceLastDimension<Tensor, ToDim> result;
+    helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, FromDim, ToDim>> result;
     MatrixMultiplication(tensor, matrix, result);
     return result;
 }
@@ -476,7 +510,7 @@ constexpr std::enable_if_t<(Tensor::DimensionCount > 2), void>
 MatrixMultiplication(
     const TTensor<TData, ToDim, FromDim>& matrix,
     const Tensor& tensor,
-    helpers::TReplaceLastDimension<Tensor, ToDim>& result) {
+    helpers::TMatrixMultiplicationResult<TTensor<TData, ToDim, FromDim>, Tensor>& result) {
 
     for (std::size_t i = 0; i < tensor.size(); ++i) {
         MatrixMultiplication(matrix, tensor[i], result[i]);
@@ -486,10 +520,10 @@ MatrixMultiplication(
 template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
 constexpr std::enable_if_t<
     (Tensor::DimensionCount > 2),
-    helpers::TReplaceLastDimension<Tensor, ToDim>
+    helpers::TMatrixMultiplicationResult<TTensor<TData, ToDim, FromDim>, Tensor>
 > MatrixMultiplication(const TTensor<TData, ToDim, FromDim>& matrix, const Tensor& tensor) {
 
-    helpers::TReplaceLastDimension<Tensor, ToDim> result;
+    helpers::TMatrixMultiplicationResult<TTensor<TData, ToDim, FromDim>, Tensor> result;
     MatrixMultiplication(matrix, tensor, result);
     return result;
 }
