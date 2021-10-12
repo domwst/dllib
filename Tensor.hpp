@@ -430,7 +430,6 @@ constexpr void MatrixMultiplication(
     const TTensor<TData, Dim2, Dim3>& matrix2,
     TTensor<TData, Dim1, Dim3>& result) {
 
-    result.FillWith(0);
     for (std::size_t i = 0; i < Dim1; ++i) {
         for (std::size_t j = 0; j < Dim2; ++j) {
             for (std::size_t k = 0; k < Dim3; ++k) {
