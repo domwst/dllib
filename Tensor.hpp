@@ -98,25 +98,6 @@ namespace helpers {
     template<class TData, std::array Dims>
     using TMakeTensor = typename MakeTensor<TData, Dims>::type;
 
-    template<class, std::size_t>
-    struct ReplaceLastDimension;
-
-    template<class TData, std::size_t... Dims, std::size_t NewLastDim>
-    struct ReplaceLastDimension<TTensor<TData, Dims...>, NewLastDim> {
-    private:
-        static constexpr auto GetNewDims() {
-            std::array<std::size_t, sizeof...(Dims)> NewDims = {Dims...};
-            NewDims.back() = NewLastDim;
-            return NewDims;
-        }
-
-    public:
-        using type = std::enable_if_t<sizeof...(Dims) != 0, TMakeTensor<TData, GetNewDims()>>;
-    };
-
-    template<class T, std::size_t LastDim>
-    using TReplaceLastDimension = typename ReplaceLastDimension<T, LastDim>::type;
-
     template<class, class>
     struct MatrixMultiplicationResult;
 
