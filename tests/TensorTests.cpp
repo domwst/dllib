@@ -112,6 +112,19 @@ constexpr void StaticChecks() {
             static_assert(dllib::MatrixMultiplication(Tensor<3>(data1), Tensor<3, 2>(data2)) == Tensor<2>(expected));
         }
     }
+    { // Matrix transpose tests
+        constexpr int data[2][3] = {
+            {1, 2, 3},
+            {4, 5, 6},
+        };
+        constexpr int data_t[3][2] = {
+            {1, 4},
+            {2, 5},
+            {3, 6},
+        };
+        static_assert(Tensor<2, 3>(data).T() == Tensor<3, 2>(data_t));
+        static_assert(Tensor<3, 2>(data_t).T() == Tensor<2, 3>(data));
+    }
 }
 
 void RuntimeChecks() {
