@@ -15,7 +15,7 @@ constexpr void StaticChecks() {
             {5, 4, 5, 3},
             {1, 0, 3, 6},
         };
-        {
+        { // Addition test
             constexpr int sum[3][4] = {
                 {8, 9, 8, 5},
                 {14, 4, 13, 11},
@@ -23,7 +23,7 @@ constexpr void StaticChecks() {
             };
             static_assert(Tensor<3, 4>(data1) + Tensor<3, 4>(data2) == Tensor<3, 4>(sum));
         }
-        {
+        { // Subtraction test
             constexpr int diff[3][4] = {
                 {0, 5, -6, 1},
                 {4, -4, 3, 5},
@@ -31,7 +31,7 @@ constexpr void StaticChecks() {
             };
             static_assert(Tensor<3, 4>(data1) - Tensor<3, 4>(data2) == Tensor<3, 4>(diff));
         }
-        {
+        { // Matrix multiplication tests
             constexpr int data3[4][3] = {
                 {4, 2, 7},
                 {2, 5, 4},
@@ -53,7 +53,7 @@ constexpr void StaticChecks() {
             static_assert(dllib::MatrixMultiplication(Tensor<4, 3>(data3), Tensor<3, 4>(data1)) == Tensor<4, 4>(mul2));
         }
     }
-    {
+    { // Tensor-matrix, tensor-vector multiplication tests
         constexpr int data1[2][3][2] = {
             {
                 {1, 2},
@@ -95,7 +95,7 @@ constexpr void StaticChecks() {
             static_assert(dllib::MatrixMultiplication(Tensor<3, 2>(data1[0]), Tensor<2>(data2)) == Tensor<3>(expected[0]));
         }
     }
-    {
+    { // Vector-vector, vector-matrix multiplication tests
         constexpr int data1[3] = {1, 2, 3};
         {
             constexpr int data2[3] = {3, 2, 1};
