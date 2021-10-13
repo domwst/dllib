@@ -125,6 +125,21 @@ constexpr void StaticChecks() {
         static_assert(Tensor<2, 3>(data).T() == Tensor<3, 2>(data_t));
         static_assert(Tensor<3, 2>(data_t).T() == Tensor<2, 3>(data));
     }
+    { // Sum tests
+        constexpr int data[2][3][2] = {
+            {
+                {1, 2},
+                {3, 4},
+                {5, 1},
+            },
+            {
+                {0, 9},
+                {1, 8},
+                {2, 7},
+            },
+        };
+        static_assert(Sum(Tensor<2, 3, 2>(data)) == 43);
+    }
 }
 
 void RuntimeChecks() {

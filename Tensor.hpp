@@ -538,4 +538,17 @@ constexpr auto MatrixMultiplication(
     return result;
 }
 
+template<CTensor T>
+constexpr typename T::DataType Sum(const T& arg) {
+    if constexpr (T::DimensionCount == 0) {
+        return arg;
+    } else {
+        typename T::DataType sm = 0;
+        for (std::size_t i = 0; i < arg.size(); ++i) {
+            sm += Sum(arg[i]);
+        }
+        return sm;
+    }
+}
+
 }
