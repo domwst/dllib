@@ -108,15 +108,15 @@ namespace helpers {
         constexpr static auto Dimensions2 = TTensor<TData, Dims2...>::Dimensions;
 
         constexpr static auto GetNewDims() {
-            std::array<std::size_t, Dimensions1.size() + Dimensions2.size() - 1> NewDims;
+            std::array<std::size_t, Dimensions1.size() + Dimensions2.size() - 2> NewDims;
             // std::copy(Dimensions1.begin(), Dimensions2.end(), NewDims.begin());
             // std::copy(Dimensions2.begin() + 1, Dimensions2.end(), NewDims.begin() + Dimensions1.size());
             // For some reasons constexpr std::copy doesn't work on my computer with clang++12
-            for (std::size_t i = 0; i < Dimensions1.size(); ++i) {
+            for (std::size_t i = 0; i + 1 < Dimensions1.size(); ++i) {
                 NewDims[i] = Dimensions1[i];
             }
             for (std::size_t i = 1; i < Dimensions2.size(); ++i) {
-                NewDims[i + Dimensions1.size() - 1] = Dimensions2[i];
+                NewDims[i + Dimensions1.size() - 2] = Dimensions2[i];
             }
             return NewDims;
         }
@@ -465,47 +465,61 @@ constexpr TTensor<TData, Dim1, Dim3> MatrixMultiplication(
 }
 
 template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
-constexpr std::enable_if_t<(Tensor::DimensionCount > 2), void> MatrixMultiplication(
+constexpr std::enable_if_t<(Tensor::DimensionCount != 2), void> MatrixMultiplication(
     const Tensor& tensor,
     const TTensor<TData, FromDim, ToDim>& matrix,
     helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, FromDim, ToDim>>& result) {
 
-    for (std::size_t i = 0; i < tensor.size(); ++i) {
-        MatrixMultiplication(tensor[i], matrix, result[i]);
+    if constexpr (Tensor::DimensionCount > 2) {
+        for (std::size_t i = 0; i < tensor.size(); ++i) {
+            MatrixMultiplication(tensor[i], matrix, result[i]);
+        }
+    } else {
+        for (std::size_t i = 0; i < FromDim; ++i) {
+            for (std::size_t j = 0; j < ToDim; ++j) {
+                result[j] += tensor[i] * matrix[i][j];
+            }
+        }
     }
 }
 
 template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
 constexpr std::enable_if_t<
-    (Tensor::DimensionCount > 2),
+    (Tensor::DimensionCount != 2),
     helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, FromDim, ToDim>>
-> MatrixMultiplication(const Tensor& tensor, const TTensor<TData, FromDim, ToDim>& matrix) {
+> MatrixMultiplication(
+    const Tensor& tensor,
+    const TTensor<TData, FromDim, ToDim>& matrix) {
 
     helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, FromDim, ToDim>> result;
     MatrixMultiplication(tensor, matrix, result);
     return result;
 }
 
-template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
-constexpr std::enable_if_t<(Tensor::DimensionCount > 2), void>
-MatrixMultiplication(
-    const TTensor<TData, ToDim, FromDim>& matrix,
+template<class TData, std::size_t VDim, CTensorOfType<TData> Tensor>
+constexpr void MatrixMultiplication(
     const Tensor& tensor,
-    helpers::TMatrixMultiplicationResult<TTensor<TData, ToDim, FromDim>, Tensor>& result) {
+    const TTensor<TData, VDim>& vector,
+    helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, VDim>>& result) {
 
-    for (std::size_t i = 0; i < tensor.size(); ++i) {
-        MatrixMultiplication(matrix, tensor[i], result[i]);
+    if constexpr (Tensor::DimensionCount == 1) {
+        for (std::size_t i = 0; i < VDim; ++i) {
+            result += tensor[i] * vector[i];
+        }
+    } else {
+        for (std::size_t i = 0; i < tensor.size(); ++i) {
+            MatrixMultiplication(tensor[i], vector, result[i]);
+        }
     }
 }
 
-template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
-constexpr std::enable_if_t<
-    (Tensor::DimensionCount > 2),
-    helpers::TMatrixMultiplicationResult<TTensor<TData, ToDim, FromDim>, Tensor>
-> MatrixMultiplication(const TTensor<TData, ToDim, FromDim>& matrix, const Tensor& tensor) {
+template<class TData, std::size_t VDim, CTensorOfType<TData> Tensor>
+constexpr auto MatrixMultiplication(
+    const Tensor& tensor,
+    const TTensor<TData, VDim>& vector) {
 
-    helpers::TMatrixMultiplicationResult<TTensor<TData, ToDim, FromDim>, Tensor> result;
-    MatrixMultiplication(matrix, tensor, result);
+    helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, VDim>> result;
+    MatrixMultiplication(tensor, vector, result);
     return result;
 }
 
