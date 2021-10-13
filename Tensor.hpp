@@ -109,15 +109,8 @@ namespace helpers {
 
         constexpr static auto GetNewDims() {
             std::array<std::size_t, Dimensions1.size() + Dimensions2.size() - 2> NewDims;
-            // std::copy(Dimensions1.begin(), Dimensions2.end(), NewDims.begin());
-            // std::copy(Dimensions2.begin() + 1, Dimensions2.end(), NewDims.begin() + Dimensions1.size());
-            // For some reasons constexpr std::copy doesn't work on my computer with clang++12
-            for (std::size_t i = 0; i + 1 < Dimensions1.size(); ++i) {
-                NewDims[i] = Dimensions1[i];
-            }
-            for (std::size_t i = 1; i < Dimensions2.size(); ++i) {
-                NewDims[i + Dimensions1.size() - 2] = Dimensions2[i];
-            }
+            std::copy(Dimensions1.begin(), Dimensions1.end() - 1, NewDims.begin());
+            std::copy(Dimensions2.begin() + 1, Dimensions2.end(), NewDims.begin() + (Dimensions1.size() - 1));
             return NewDims;
         }
 
