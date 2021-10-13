@@ -80,7 +80,7 @@ namespace helpers {
 
 
     template<class, std::array, class>
-    struct MakeTensorHelper;
+    struct MakeTensorHelper {};
 
     template<class TData, std::size_t N, std::array<std::size_t, N> Dims, std::size_t... I>
     struct MakeTensorHelper<TData, Dims, std::index_sequence<I...>> {
@@ -88,7 +88,7 @@ namespace helpers {
     };
 
     template<class, std::array>
-    struct MakeTensor;
+    struct MakeTensor {};
 
     template<class TData, std::size_t N, std::array<std::size_t, N> Dims>
     struct MakeTensor<TData, Dims> {
@@ -99,7 +99,7 @@ namespace helpers {
     using TMakeTensor = typename MakeTensor<TData, Dims>::type;
 
     template<class, class>
-    struct MatrixMultiplicationResult;
+    struct MatrixMultiplicationResult {};
 
     template<class TData, std::size_t... Dims1, std::size_t... Dims2>
     struct MatrixMultiplicationResult<TTensor<TData, Dims1...>, TTensor<TData, Dims2...>> {
@@ -127,6 +127,17 @@ namespace helpers {
 
     template<class T1, class T2>
     using TMatrixMultiplicationResult = typename MatrixMultiplicationResult<T1, T2>::type;
+
+    template<class>
+    struct TransposeResult {};
+
+    template<class TData, std::size_t Dim1, std::size_t Dim2>
+    struct TransposeResult<TTensor<TData, Dim1, Dim2>> {
+        using type = TTensor<TData, Dim2, Dim1>;
+    };
+
+    template<class T>
+    using TTransposeResult = typename TransposeResult<T>::type;
 
 }
 
@@ -360,6 +371,17 @@ public:
 
     constexpr auto end() {
         return data_.end();
+    }
+
+    template<class T = TTensor>
+    constexpr auto T() const {
+        helpers::TTransposeResult<T> result;
+        for (std::size_t i = 0; i < size(); ++i) {
+            for (std::size_t j = 0; j < data_[i].size(); ++j) {
+                result[j][i] = data_[i][j];
+            }
+        }
+        return result;
     }
 
     constexpr static std::size_t size() {
