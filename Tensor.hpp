@@ -2,9 +2,12 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cassert>
 #include <type_traits>
 #include <utility>
+
+#define fold(x) (__builtin_constant_p(x) ? (x) : (x))
 
 namespace dllib {
 
@@ -170,11 +173,11 @@ public:
         return (*this) = val;
     }
 
-    constexpr TData data() const {
+    constexpr TData Data() const {
         return data_;
     }
 
-    constexpr TData& data() {
+    constexpr TData& Data() {
         return data_;
     }
 
@@ -328,13 +331,13 @@ public:
     }
 
     template<std::size_t... NewDims>
-    constexpr const TTensor<TData, NewDims...>& view() const {
+    const TTensor<TData, NewDims...>& view() const {
         static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
         return *reinterpret_cast<const TTensor<TData, NewDims...>*>(this);
     }
 
     template<std::size_t... NewDims>
-    constexpr TTensor<TData, NewDims...>& view() {
+    TTensor<TData, NewDims...>& view() {
         static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
         return *reinterpret_cast<TTensor<TData, NewDims...>*>(this);
     }
@@ -346,7 +349,7 @@ public:
         return *this;
     }
 
-    constexpr const ContainerType& data() const {
+    constexpr const ContainerType& Data() const {
         return data_;
     }
 
@@ -367,7 +370,7 @@ public:
     }
 
     template<class T = TTensor>
-    constexpr auto T() const {
+    constexpr auto T() const { // FIX HERE
         helpers::TTransposeResult<T> result;
         for (std::size_t i = 0; i < size(); ++i) {
             for (std::size_t j = 0; j < data_[i].size(); ++j) {
@@ -406,7 +409,7 @@ template<std::size_t DimToStop, class TFunction, CTensor Tensor>
 constexpr std::enable_if_t<(Tensor::DimensionCount >= DimToStop), void>
 ApplyFunctionInplace(TFunction&& function, Tensor& tensor) {
     if constexpr (Tensor::DimensionCount == DimToStop) {
-        tensor = function(tensor.data());
+        tensor = function(tensor.Data());
     } else {
         for (std::size_t i = 0; i < tensor.size(); ++i) {
             ApplyFunctionInplace<DimToStop>(function, tensor[i]);
@@ -418,7 +421,7 @@ template<std::size_t DimToStop, class TFunction, class TSourceData, std::size_t.
 constexpr std::enable_if_t<(sizeof...(Dims) >= DimToStop), void>
 ApplyFunction(TFunction&& function, const TTensor<TSourceData, Dims...>& source, TensorResult& result) {
     if constexpr (sizeof...(Dims) == DimToStop) {
-        result = function(source.data());
+        result = function(source.Data());
     } else {
         for (std::size_t i = 0; i < source.size(); ++i) {
             ApplyFunction<DimToStop>(function, source[i], result[i]);
