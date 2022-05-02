@@ -9,19 +9,15 @@
 
 namespace dllib {
 
-namespace helpers {
-
-
-}
-
 struct IArbitraryVariable;
 
 using TArbitraryVariable = std::shared_ptr<IArbitraryVariable>;
 
 struct IArbitraryVariable {
+    // NOLINTNEXTLINE
     IArbitraryVariable(bool requires_grad) : requires_grad(requires_grad) {}
 
-    virtual std::vector<TArbitraryVariable> GetChildren() const = 0;
+    [[nodiscard]] virtual std::vector<TArbitraryVariable> GetChildren() const = 0;
     virtual void PushGradient() = 0;
     virtual ~IArbitraryVariable() = default;
 
@@ -39,9 +35,10 @@ template<CTensor T>
 struct IVariable : public IArbitraryVariable {
     using IArbitraryVariable::requires_grad;
 
+    // NOLINTNEXTLINE
     IVariable(const T& value, bool requires_grad = false) : IArbitraryVariable(requires_grad), value(value) {}
 
-    virtual ~IVariable() = default;
+    ~IVariable() override = default;
 
     template<class U = T>
     std::enable_if_t<U::DimensionCount == 0, void> Backward() {
@@ -59,7 +56,7 @@ struct IVariable : public IArbitraryVariable {
         };
 
         for (auto&& child : GetChildren()) {
-            if (child->requires_grad && !SubGraph.count(child)) {
+            if (child->requires_grad && !SubGraph.contains(child)) {
                 dfs(dfs, std::move(child));
             }
         }
@@ -89,7 +86,7 @@ struct TLeafNode final : public IVariable<T> {
     using IVariable<T>::requires_grad;
     using IVariable<T>::zero_grad;
 
-    std::vector<TArbitraryVariable> GetChildren() const {
+    [[nodiscard]] std::vector<TArbitraryVariable> GetChildren() const {
         return {};
     }
 
@@ -114,7 +111,7 @@ constexpr bool CalculateOr(TFirstArg first_arg, TArgs... other_args) {
 }
 
 template<CTensor T>
-constexpr std::optional<T*> GetGradiendPointerIfRequired(const TVariable<T>& v) {
+constexpr std::optional<T*> GetGradientPointerIfRequired(const TVariable<T>& v) {
     if (v->requires_grad) {
         return &(v->grad);
     } else {
@@ -135,14 +132,15 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
     using IVariable<TValue>::requires_grad;
     using IVariable<TValue>::zero_grad;
 
+    // NOLINTNEXTLINE
     TOperationNode(TOperation op, const TVariable<TArgs>&... args) :
         IVariable<TValue>(op.Forward(args->value...), helpers::CalculateOr(args->requires_grad...)),
         operation_(std::move(op)),
         args_({args...}) {}
 
-    TOperationNode(TOperationNode&&) = default;
+    TOperationNode(TOperationNode&&) noexcept = default;
 
-    std::vector<TArbitraryVariable> GetChildren() const {
+    [[nodiscard]] std::vector<TArbitraryVariable> GetChildren() const {
         return [this]<size_t... i>(std::index_sequence<i...>) -> std::vector<TArbitraryVariable> {
             return {static_pointer_cast<IArbitraryVariable>(get<i>(args_))...};
         }(std::make_index_sequence<sizeof...(TArgs)>());
@@ -150,7 +148,7 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
 
     void PushGradient() {
         [this]<size_t... i>(std::index_sequence<i...>) {
-            operation_.Backward(grad, helpers::GetGradiendPointerIfRequired(get<i>(args_))...);
+            operation_.Backward(grad, helpers::GetGradientPointerIfRequired(get<i>(args_))...);
         }(std::make_index_sequence<sizeof...(TArgs)>());
         zero_grad();
     }
