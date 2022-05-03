@@ -1,4 +1,4 @@
-#include <dllib/Tensor.hpp>
+#include <dllib/tensor.hpp>
 
 template<std::size_t... Dims>
 using Tensor = dllib::TTensor<int, Dims...>;

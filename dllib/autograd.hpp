@@ -1,6 +1,6 @@
 #pragma once
 
-#include <dllib/Tensor.hpp>
+#include <dllib/tensor.hpp>
 
 #include <memory>
 #include <optional>

@@ -1,4 +1,4 @@
-#include <dllib/Tensor.hpp>
+#include <dllib/tensor.hpp>
 #include <boost/ut.hpp>
 
 namespace ut = boost::ut;
