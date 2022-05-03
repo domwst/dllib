@@ -228,7 +228,7 @@ class TTensor<TData, FirstDim, OtherDims...> {
   template<std::size_t N>
   using SubTensor = std::conditional_t<N == DimensionCount, TTensor, typename ElementType::template SubTensor<N>>;
 
-  constexpr TTensor(TData val = 0) {
+  constexpr explicit TTensor(TData val = 0) {
     FillWith(val);
   }
 
@@ -246,7 +246,7 @@ class TTensor<TData, FirstDim, OtherDims...> {
   }
 
   template<helpers::CHasBeginEnd T>
-  constexpr TTensor(const T& value) : TTensor(std::begin(value), std::end(value)) {}
+  constexpr explicit TTensor(const T& value) : TTensor(std::begin(value), std::end(value)) {}
 
   constexpr TTensor& operator+=(const TTensor& other) {
     for (std::size_t i = 0; i < FirstDim; ++i) {
