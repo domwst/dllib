@@ -228,7 +228,8 @@ auto MatrixMultiplication(const IVariable<T1>& l, const IVariable<T2>& r) {
       return MatrixMultiplication(l, r);
     }
 
-    void Backward(const auto& grad, std::optional<T1*> l, std::optional<T2*> r) {
+    void Backward(const helpers::MatrixMultiplicationResult<T1, T2>& grad,
+                  std::optional<T1*> l, std::optional<T2*> r) {
       if (l) {
         MatrixMultiplication(grad, r_.T(), **l);
       }
@@ -251,7 +252,7 @@ auto Sum(const TVariable<T>& val) {
       return Sum(val);
     }
 
-    void Backward(const auto& grad, std::optional<T*> v) {
+    void Backward(typename T::DataType grad, std::optional<T*> v) {
       if (v) {
         **v += grad;
       }
