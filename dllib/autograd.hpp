@@ -30,12 +30,27 @@ template<CTensor T>
 struct IVariable;
 
 template<CTensor T>
-class TVariable : public std::shared_ptr<IVariable<T>> {
- public:
+struct TLeafNode final : public IVariable<T> {
+  using IVariable<T>::IVariable;
+  using IVariable<T>::value;
+  using IVariable<T>::grad;
+  using IVariable<T>::requires_grad;
+  using IVariable<T>::zero_grad;
+
+  [[nodiscard]] std::vector<TArbitraryVariable> GetChildren() const {
+    return {};
+  }
+
+  void PushGradient() {}
+};
+
+template<CTensor T>
+struct TVariable : public std::shared_ptr<IVariable<T>> {
   using std::shared_ptr<IVariable<T>>::shared_ptr;
 
   // NOLINTNEXTLINE
-  TVariable(T value) : TVariable(std::make_shared<IVariable<T>>(value)) {
+  TVariable(const T& value, bool required_grad = false)
+    : std::shared_ptr<IVariable<T>>(std::make_shared<TLeafNode<T>>(value, required_grad)) {
   }
 };
 
@@ -85,28 +100,6 @@ struct IVariable : public IArbitraryVariable {
   T value;
   T grad;
 };
-
-
-template<CTensor T>
-struct TLeafNode final : public IVariable<T> {
-  using IVariable<T>::IVariable;
-  using IVariable<T>::value;
-  using IVariable<T>::grad;
-  using IVariable<T>::requires_grad;
-  using IVariable<T>::zero_grad;
-
-  [[nodiscard]] std::vector<TArbitraryVariable> GetChildren() const {
-    return {};
-  }
-
-  void PushGradient() {}
-};
-
-template<CTensor T>
-inline constexpr TVariable<T> MakeLeaf(const T& value, bool requires_grad = false) {
-  return std::make_shared<TLeafNode<T>>(value, requires_grad);
-}
-
 
 namespace helpers {
 
@@ -158,8 +151,7 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
   void PushGradient() {
     [this]<size_t... i>(std::index_sequence<i...>) {
       operation_.Backward(grad, helpers::GetGradientPointerIfRequired(get<i>(args_))...);
-    }
-    (std::make_index_sequence<sizeof...(TArgs)>());
+    }(std::make_index_sequence<sizeof...(TArgs)>());
     zero_grad();
   }
 
@@ -255,6 +247,23 @@ auto MatrixMultiplication(const IVariable<T1>& l, const IVariable<T2>& r) {
   };
 
   return std::make_shared<TOperationNode<TMatrixMultiplication, T1, T2>>(TMatrixMultiplication{}, l, r);
+}
+
+template<CTensor T>
+auto Sum(const TVariable<T>& val) {
+  struct TSum {
+    TTensor<typename T::DataType> Forward(const T& val) {
+      return Sum(val);
+    }
+
+    void Backward(const auto& grad, std::optional<T*> v) {
+      if (v) {
+        **v += grad;
+      }
+    }
+  };
+
+  return std::make_shared<TOperationNode<TSum, T>>(TSum{}, val);
 }
 
 // template<CTensor T>
