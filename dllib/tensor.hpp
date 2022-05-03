@@ -450,7 +450,7 @@ ApplyFunction(TFunction&& function, const TTensor<TSourceData, Dims...>& source,
 template<class TRetData, std::size_t DimToStop, class TFunction, class TArgumentData, std::size_t... Dims>
 constexpr TTensor<TRetData, Dims...> ApplyFunction(TFunction&& function, const TTensor<TArgumentData, Dims...>& arg) {
   TTensor<TRetData, Dims...> result;
-  ApplyFunction<DimToStop>(std::move(function), arg, result);
+  ApplyFunction<DimToStop>(std::forward(function), arg, result);
   return result;
 }
 
@@ -463,7 +463,7 @@ constexpr auto ApplyFunction(TFunction&& function, const ArgumentTensor& arg) {
         typename ArgumentTensor::template SubTensor<DimToStop>
       >,
       DimToStop
-    >(std::move(function), arg);
+    >(std::forward(function), arg);
   } else {
     return ApplyFunction<
       typename std::invoke_result_t<
@@ -471,7 +471,7 @@ constexpr auto ApplyFunction(TFunction&& function, const ArgumentTensor& arg) {
         typename ArgumentTensor::template SubTensor<DimToStop>
       >::DataType,
       DimToStop
-    >(std::move(function), arg);
+    >(std::forward(function), arg);
   }
 }
 
@@ -572,9 +572,7 @@ constexpr typename T::DataType Sum(const T& arg) {
   }
 }
 
-}  // namespace dllib
-
-template<dllib::CTensor T>
+template<CTensor T>
 std::ostream& operator<<(std::ostream& out, T tensor) {
   out << "Tensor<";
   {
@@ -601,3 +599,5 @@ std::ostream& operator<<(std::ostream& out, T tensor) {
   out << "}";
   return out;
 }
+
+}  // namespace dllib
