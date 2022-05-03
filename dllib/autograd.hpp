@@ -103,13 +103,8 @@ struct IVariable : public IArbitraryVariable {
 
 namespace helpers {
 
-template<class TFirstArg, class... TArgs>
-constexpr bool CalculateOr(TFirstArg first_arg, TArgs... other_args) {
-  if constexpr (sizeof...(TArgs) == 0) {
-    return first_arg;
-  } else {
-    return first_arg || CalculateOr(other_args...);
-  }
+constexpr bool CalculateOr(auto... args) {
+  return (args || ... || false);
 }
 
 template<CTensor T>
