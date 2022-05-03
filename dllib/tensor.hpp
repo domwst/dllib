@@ -234,19 +234,17 @@ class TTensor<TData, FirstDim, OtherDims...> {
 
   template<class TForwardIt>
   constexpr TTensor(TForwardIt begin, TForwardIt end) {
-    if constexpr (helpers::IsConstexpr([&begin, &end]() { return std::distance(begin, end); })) {
-      static_assert(std::distance(begin, end) == FirstDim);
-    } else {
-      assert(std::distance(begin, end) == FirstDim);
-    }
-    for (std::size_t i = 0; i < FirstDim; ++i) {
-      data_[i] = *begin;
-      ++begin;
-    }
+    FillWith(begin, end);
   }
 
   template<helpers::CHasBeginEnd T>
-  constexpr explicit TTensor(const T& value) : TTensor(std::begin(value), std::end(value)) {}
+  constexpr TTensor& operator=(const T& value) {
+    FillWith(std::begin(value), std::end(value));
+    return *this;
+  }
+
+  template<helpers::CHasBeginEnd T>
+  constexpr TTensor(const T& value) : TTensor(std::begin(value), std::end(value)) {}
 
   constexpr TTensor& operator+=(const TTensor& other) {
     for (std::size_t i = 0; i < FirstDim; ++i) {
@@ -363,6 +361,20 @@ class TTensor<TData, FirstDim, OtherDims...> {
   constexpr TTensor& FillWith(TData val) {
     for (std::size_t i = 0; i < FirstDim; ++i) {
       data_[i].FillWith(val);
+    }
+    return *this;
+  }
+
+  template<class TForwardIt>
+  constexpr TTensor& FillWith(TForwardIt begin, TForwardIt end) {
+    if constexpr (helpers::IsConstexpr([&begin, &end]() { return std::distance(begin, end); })) {
+      static_assert(std::distance(begin, end) == FirstDim);
+    } else {
+      assert(std::distance(begin, end) == FirstDim);
+    }
+    for (std::size_t i = 0; i < FirstDim; ++i) {
+      data_[i] = *begin;
+      ++begin;
     }
     return *this;
   }
@@ -574,26 +586,29 @@ constexpr typename T::DataType Sum(const T& arg) {
 
 template<CTensor T>
 std::ostream& operator<<(std::ostream& out, T tensor) {
-  out << "Tensor<";
-  {
-    bool first = true;
-    for (auto x : T::Dimensions) {
-      if (!first) {
-        out << ", ";
+  if constexpr (T::DimensionCount > 0) {
+    out << "Tensor<";
+    {
+      bool first = true;
+      for (auto x: T::Dimensions) {
+        if (!first) {
+          out << ", ";
+        }
+        first = false;
+        out << x;
       }
-      first = false;
-      out << x;
     }
+    out << '>';
   }
   {
     bool first = true;
-    out << ">{";
+    out << "{";
     for (auto x : tensor.template View<T::TotalElements>()) {
       if (!first) {
         out << ", ";
       }
       first = false;
-      out << x;
+      out << x.Data();
     }
   }
   out << "}";
