@@ -165,8 +165,12 @@ class TTensor<TData> {
   template<std::size_t N>
   using SubTensor = std::conditional_t<N == 0, TTensor, void>;
 
+
+  constexpr TTensor() : TTensor(0) {
+  }
+
   // NOLINTNEXTLINE
-  constexpr TTensor(TData val = 0) {
+  constexpr TTensor(TData val) {
     FillWith(val);
   }
 
@@ -228,7 +232,10 @@ class TTensor<TData, FirstDim, OtherDims...> {
   template<std::size_t N>
   using SubTensor = std::conditional_t<N == DimensionCount, TTensor, typename ElementType::template SubTensor<N>>;
 
-  constexpr explicit TTensor(TData val = 0) {
+  constexpr TTensor() : TTensor(0) {
+  }
+
+  constexpr explicit TTensor(TData val) {
     FillWith(val);
   }
 
