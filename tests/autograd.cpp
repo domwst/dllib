@@ -203,4 +203,58 @@ static ut::suite autograd = [] {
 
     expect(eq(v->grad, TTensor<int, 3>(2)));
   };
+
+  "complex_chaining_1"_test = [] {
+    int data1[2][2] = {
+      {1, 2},
+      {3, 4},
+    };
+    TVariable<TTensor<int, 2, 2>> v1(data1, true);
+
+    int data2[2][2] = {
+      {4, 5},
+      {2, 3},
+    };
+    TVariable<TTensor<int, 2, 2>> v2(data2, true);
+
+    Sum(MatrixProduct(v1 - v2, v1 + v2 + v2))->Backward();
+    {
+      int expected[2][2] = {
+        {19, 15},
+        {19, 15},
+      };
+      expect(eq(v1->grad, TTensor<int, 2, 2>(expected)));
+    }
+    {
+      int expected[2][2] = {
+        {-25, -21},
+        {-25, -21},
+      };
+      expect(eq(v2->grad, TTensor<int, 2, 2>(expected)));
+    }
+  };
+
+  "proper_requires_grad_propagation"_test = [] {
+    int data1[2][2] = {
+      {1, 2},
+      {3, 4},
+    };
+    TVariable<TTensor<int, 2, 2>> v1(data1, true);
+
+    int data2[2][2] = {
+      {4, 5},
+      {2, 3},
+    };
+    TVariable<TTensor<int, 2, 2>> v2(data2, false);
+
+    Sum(MatrixProduct(v1 - v2, v1 + v2 + v2))->Backward();
+    {
+      int expected[2][2] = {
+        {19, 15},
+        {19, 15},
+      };
+      expect(eq(v1->grad, TTensor<int, 2, 2>(expected)));
+    }
+    expect(eq(v2->grad, TTensor<int, 2, 2>(0)));
+  };
 };
