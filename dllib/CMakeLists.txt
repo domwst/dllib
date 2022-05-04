@@ -5,5 +5,5 @@ get_filename_component(LIB_PATH "." ABSOLUTE)
 
 file(GLOB_RECURSE LIB_HEADERS ${LIB_PATH}/*.hpp)
 
-add_library(dllib INTERFACE ${LIB_CXX_SOURCES} ${LIB_HEADERS})
+add_library(dllib INTERFACE ${LIB_HEADERS})
 target_include_directories(dllib INTERFACE ${LIB_INCLUDE_PATH})
