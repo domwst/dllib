@@ -220,7 +220,7 @@ TVariable<T> operator*(const TVariable<T>& l, const TVariable<T>& r) {
 }
 
 template<CTensor T1, CTensor T2>
-auto MatrixProduct(const TVariable<T1>& l, const TVariable<T2>& r) {
+TVariable<helpers::TMatrixProductResult<T1, T2>> MatrixProduct(const TVariable<T1>& l, const TVariable<T2>& r) {
   struct TMatrixProduct {
     helpers::TMatrixProductResult<T1, T2> Forward(const T1& l, const T2& r) {
       l_ = l;
