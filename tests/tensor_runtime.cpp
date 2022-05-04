@@ -87,4 +87,36 @@ static ut::suite tensor_runtime_tests = [] {
     };
     expect(eq(Sum(Tensor<2, 3, 2>(data)), 43));
   };
+  "view"_test = [] {
+    int data[2][3][2] = {
+      {
+        {1, 2},
+        {3, 4},
+        {5, 1},
+      },
+      {
+        {0, 9},
+        {1, 8},
+        {2, 7},
+      },
+    };
+    Tensor<2, 3, 2> v1(data);
+
+    {
+      int expected[12] = {1, 2, 3, 4, 5, 1, 0, 9, 1, 8, 2, 7};
+      Tensor<12> v2(expected);
+      expect(eq(v1.View<12>(), v2));
+      expect(eq(v2.View<2, 3, 2>(), v1));
+    }
+    {
+      int expected[3][4] = {
+        {1, 2, 3, 4},
+        {5, 1, 0, 9},
+        {1, 8, 2, 7},
+      };
+      Tensor<3, 4> v2(expected);
+      expect(eq(v1.View<3, 4>(), v2));
+      expect(eq(v2.View<2, 3, 2>(), v1));
+    }
+  };
 };
