@@ -3,7 +3,6 @@
 #include <dllib/tensor.hpp>
 
 #include <memory>
-#include <optional>
 #include <unordered_set>
 #include <vector>
 
@@ -108,11 +107,11 @@ constexpr bool CalculateOr(auto... args) {
 }
 
 template<CTensor T>
-constexpr std::optional<T*> GetGradientPointerIfRequired(const TVariable<T>& v) {
+constexpr T* GetGradientPointerIfRequired(const TVariable<T>& v) {
   if (v->requires_grad) {
     return &(v->grad);
   } else {
-    return {};
+    return nullptr;
   }
 }
 
@@ -162,12 +161,12 @@ TVariable<T> operator+(const TVariable<T>& l, const TVariable<T>& r) {
       return l + r;
     }
 
-    void Backward(const T& grad, std::optional<T*> l, std::optional<T*> r) {
+    void Backward(const T& grad, T* l, T* r) {
       if (l) {
-        **l += grad;
+        *l += grad;
       }
       if (r) {
-        **r += grad;
+        *r += grad;
       }
     }
   };
@@ -182,12 +181,12 @@ TVariable<T> operator-(const TVariable<T>& l, const TVariable<T>& r) {
       return l - r;
     }
 
-    void Backward(const T& grad, std::optional<T*> l, std::optional<T*> r) {
+    void Backward(const T& grad, T* l, T* r) {
       if (l) {
-        **l += grad;
+        *l += grad;
       }
       if (r) {
-        **r -= grad;
+        *r -= grad;
       }
     }
   };
@@ -204,12 +203,12 @@ TVariable<T> operator*(const TVariable<T>& l, const TVariable<T>& r) {
       return l * r;
     }
 
-    void Backward(const T& grad, std::optional<T*> l, std::optional<T*> r) {
+    void Backward(const T& grad, T* l, T* r) {
       if (l) {
-        **l += grad * r_;
+        *l += grad * r_;
       }
       if (r) {
-        **r += l_ * grad;
+        *r += l_ * grad;
       }
     }
 
@@ -228,13 +227,12 @@ TVariable<helpers::TMatrixProductResult<T1, T2>> MatrixProduct(const TVariable<T
       return MatrixProduct(l, r);
     }
 
-    void Backward(const helpers::TMatrixProductResult<T1, T2>& grad,
-                  std::optional<T1*> l, std::optional<T2*> r) {
+    void Backward(const helpers::TMatrixProductResult<T1, T2>& grad, T1* l, T2* r) {
       if (l) {
-        MatrixProduct(grad, r_.T(), **l);
+        MatrixProduct(grad, r_.T(), *l);
       }
       if (r) {
-        MatrixProduct(l_.T(), grad, **r);
+        MatrixProduct(l_.T(), grad, *r);
       }
     };
 
@@ -252,9 +250,9 @@ auto Sum(const TVariable<T>& val) {
       return Sum(val);
     }
 
-    void Backward(typename T::DataType grad, std::optional<T*> v) {
+    void Backward(typename T::DataType grad, T* v) {
       if (v) {
-        **v += grad;
+        *v += grad;
       }
     }
   };
@@ -273,10 +271,10 @@ TVariable<TTensor<typename T::DataType, NewDims...>> View(const TVariable<T>& te
       return val.template View<NewDims...>();
     }
 
-    void Backward(const ConvertedTensor& grad, std::optional<T*> v) {
+    void Backward(const ConvertedTensor& grad, T* v) {
       if (v) {
-        [ptr = *v, &grad]<size_t... i>(std::index_sequence<i...>) {
-          *ptr += grad.template View<T::Dimensions[i]...>();
+        [v, &grad]<size_t... i>(std::index_sequence<i...>) {
+          *v += grad.template View<T::Dimensions[i]...>();
         }(std::make_index_sequence<T::DimensionCount>{});
       }
     }
