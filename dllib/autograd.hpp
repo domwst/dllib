@@ -262,63 +262,27 @@ auto Sum(const TVariable<T>& val) {
   return std::make_shared<TOperationNode<TSum, T>>(TSum{}, val);
 }
 
-// template<CTensor T>
-// struct TSumAllNode : public IVariable<TTensor<typename T::DataType>> {
-//     using ValueType = TTensor<typename T::DataType>;
+template<size_t... NewDims, CTensor T>
+TVariable<TTensor<typename T::DataType, NewDims...>> View(const TVariable<T>& tensor) {
+  struct TView {
+    _Pragma("clang diagnostic ignored \"-Wunused-local-typedef\"")
+    using ConvertedTensor = TTensor<typename T::DataType, NewDims...>;
+    _Pragma("clang diagnostic warning \"-Wunused-local-typedef\"")
 
-//     using IVariable<ValueType>::value;
-//     using IVariable<ValueType>::grad;
-//     using IVariable<ValueType>::requires_grad;
-//     using IVariable<ValueType>::zero_grad;
+    ConvertedTensor Forward(const T& val) {
+      return val.template View<NewDims...>();
+    }
 
-//     TSumAllNode(const TVariable<T>& arg) :
-//         IVariable<ValueType>(Sum(arg->value)),
-//         v_(arg) {}
+    void Backward(const ConvertedTensor& grad, std::optional<T*> v) {
+      if (v) {
+        [ptr = *v, &grad]<size_t... i>(std::index_sequence<i...>) {
+          *ptr += grad.template View<T::Dimensions[i]...>();
+        }(std::make_index_sequence<T::DimensionCount>{});
+      }
+    }
+  };
 
-//     void PushGradient() {
-//         v_->grad += grad;
-//         zero_grad();
-//     }
-
-//     std::vector<TArbitraryVariable> GetChildren() const {
-//         return {v_};
-//     }
-
-// private:
-//     TVariable<T> v_;
-// };
-
-// template<CTensor T>
-// TVariable<TTensor<typename T::DataType>> Sum(const TVariable<T>& arg) {
-//     return std::make_shared<TSumAllNode<T>>(arg);
-// }
-
-// template<CTensor T>
-// struct TAddScalarNode : public IVariable<T> {
-//     using IVariable<T>::value;
-//     using IVariable<T>::grad;
-//     using IVariable<T>::requires_grad;
-//     using IVariable<T>::zero_grad;
-
-//     TAddScalarNode(const TVariable<T>& l, const TVariable<typename T::DataType>& r) :
-//         IVariable<T>(l->value() + r->value()),
-//         l_(l), r_(r) {}
-
-//     TAddScalarNode(const TVariable<typename T::DataType>& l, const TVariable<T>& r) :
-//         TAddScalarNode(r, l) {}
-
-//     void PushGradient() {
-//         l_ += grad;
-//         r_ += Sum(grad);
-//     }
-
-//     std::vector<TArbitraryVariable> GetChildren() const {
-//         return {l_, r_};
-//     }
-
-// private:
-//     TVariable<T> l_;
-//     TVariable<typename T::DataType> r_;
-// };
+  return std::make_shared<TOperationNode<TView, T>>(TView{}, tensor);
+}
 
 }
