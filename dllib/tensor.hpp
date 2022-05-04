@@ -119,21 +119,9 @@ template<class, class>
 struct MatrixProductResult {
 };
 
-template<class TData, std::size_t... Dims1, std::size_t... Dims2>
-struct MatrixProductResult<TTensor<TData, Dims1...>, TTensor<TData, Dims2...>> {
- private:
-  constexpr static auto Dimensions1 = TTensor<TData, Dims1...>::Dimensions;
-  constexpr static auto Dimensions2 = TTensor<TData, Dims2...>::Dimensions;
-
-  consteval static auto GetNewDims() {
-    std::array<std::size_t, Dimensions1.size() + Dimensions2.size() - 2> NewDims{};
-    std::copy(Dimensions1.begin(), Dimensions1.end() - 1, NewDims.begin());
-    std::copy(Dimensions2.begin() + 1, Dimensions2.end(), NewDims.begin() + (Dimensions1.size() - 1));
-    return NewDims;
-  }
-
- public:
-  using type = std::enable_if_t<Dimensions1.back() == Dimensions2.front(), TMakeTensor<TData, GetNewDims()>>;
+template<class TData, std::size_t Dim1, std::size_t Dim2, std::size_t Dim3>
+struct MatrixProductResult<TTensor<TData, Dim1, Dim2>, TTensor<TData, Dim2, Dim3>> {
+  using type = TTensor<TData, Dim1, Dim3>;
 };
 
 template<class T1, class T2>
