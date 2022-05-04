@@ -116,11 +116,11 @@ template<class TData, std::array Dims>
 using TMakeTensor = typename MakeTensor<TData, Dims>::type;
 
 template<class, class>
-struct MatrixMultiplicationResult {
+struct MatrixProductResult {
 };
 
 template<class TData, std::size_t... Dims1, std::size_t... Dims2>
-struct MatrixMultiplicationResult<TTensor<TData, Dims1...>, TTensor<TData, Dims2...>> {
+struct MatrixProductResult<TTensor<TData, Dims1...>, TTensor<TData, Dims2...>> {
  private:
   constexpr static auto Dimensions1 = TTensor<TData, Dims1...>::Dimensions;
   constexpr static auto Dimensions2 = TTensor<TData, Dims2...>::Dimensions;
@@ -137,7 +137,7 @@ struct MatrixMultiplicationResult<TTensor<TData, Dims1...>, TTensor<TData, Dims2
 };
 
 template<class T1, class T2>
-using TMatrixMultiplicationResult = typename MatrixMultiplicationResult<T1, T2>::type;
+using TMatrixProductResult = typename MatrixProductResult<T1, T2>::type;
 
 template<class>
 struct TransposeResult {
@@ -495,7 +495,7 @@ constexpr auto ApplyFunction(TFunction&& function, const ArgumentTensor& arg) {
 }
 
 template<class TData, std::size_t Dim1, std::size_t Dim2, std::size_t Dim3>
-constexpr void MatrixMultiplication(
+constexpr void MatrixProduct(
   const TTensor<TData, Dim1, Dim2>& matrix1,
   const TTensor<TData, Dim2, Dim3>& matrix2,
   TTensor<TData, Dim1, Dim3>& result) {
@@ -510,24 +510,24 @@ constexpr void MatrixMultiplication(
 }
 
 template<class TData, std::size_t Dim1, std::size_t Dim2, std::size_t Dim3>
-constexpr TTensor<TData, Dim1, Dim3> MatrixMultiplication(
+constexpr TTensor<TData, Dim1, Dim3> MatrixProduct(
   const TTensor<TData, Dim1, Dim2>& matrix1,
   const TTensor<TData, Dim2, Dim3>& matrix2) {
 
   TTensor<TData, Dim1, Dim3> result;
-  MatrixMultiplication(matrix1, matrix2, result);
+  MatrixProduct(matrix1, matrix2, result);
   return result;
 }
 
 template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
-constexpr std::enable_if_t<(Tensor::DimensionCount != 2), void> MatrixMultiplication(
+constexpr std::enable_if_t<(Tensor::DimensionCount != 2), void> MatrixProduct(
   const Tensor& tensor,
   const TTensor<TData, FromDim, ToDim>& matrix,
-  helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, FromDim, ToDim>>& result) {
+  helpers::TMatrixProductResult<Tensor, TTensor<TData, FromDim, ToDim>>& result) {
 
   if constexpr (Tensor::DimensionCount > 2) {
     for (std::size_t i = 0; i < tensor.Size(); ++i) {
-      MatrixMultiplication(tensor[i], matrix, result[i]);
+      MatrixProduct(tensor[i], matrix, result[i]);
     }
   } else {
     for (std::size_t i = 0; i < FromDim; ++i) {
@@ -541,21 +541,21 @@ constexpr std::enable_if_t<(Tensor::DimensionCount != 2), void> MatrixMultiplica
 template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
 constexpr std::enable_if_t<
   (Tensor::DimensionCount != 2),
-  helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, FromDim, ToDim>>
-> MatrixMultiplication(
+  helpers::TMatrixProductResult<Tensor, TTensor<TData, FromDim, ToDim>>
+> MatrixProduct(
   const Tensor& tensor,
   const TTensor<TData, FromDim, ToDim>& matrix) {
 
-  helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, FromDim, ToDim>> result;
-  MatrixMultiplication(tensor, matrix, result);
+  helpers::TMatrixProductResult<Tensor, TTensor<TData, FromDim, ToDim>> result;
+  MatrixProduct(tensor, matrix, result);
   return result;
 }
 
 template<class TData, std::size_t VDim, CTensorOfType<TData> Tensor>
-constexpr void MatrixMultiplication(
+constexpr void MatrixProduct(
   const Tensor& tensor,
   const TTensor<TData, VDim>& vector,
-  helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, VDim>>& result) {
+  helpers::TMatrixProductResult<Tensor, TTensor<TData, VDim>>& result) {
 
   if constexpr (Tensor::DimensionCount == 1) {
     for (std::size_t i = 0; i < VDim; ++i) {
@@ -563,18 +563,18 @@ constexpr void MatrixMultiplication(
     }
   } else {
     for (std::size_t i = 0; i < tensor.Size(); ++i) {
-      MatrixMultiplication(tensor[i], vector, result[i]);
+      MatrixProduct(tensor[i], vector, result[i]);
     }
   }
 }
 
 template<class TData, std::size_t VDim, CTensorOfType<TData> Tensor>
-constexpr auto MatrixMultiplication(
+constexpr auto MatrixProduct(
   const Tensor& tensor,
   const TTensor<TData, VDim>& vector) {
 
-  helpers::TMatrixMultiplicationResult<Tensor, TTensor<TData, VDim>> result;
-  MatrixMultiplication(tensor, vector, result);
+  helpers::TMatrixProductResult<Tensor, TTensor<TData, VDim>> result;
+  MatrixProduct(tensor, vector, result);
   return result;
 }
 

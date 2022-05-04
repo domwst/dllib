@@ -54,9 +54,9 @@ static ut::suite tensor_runtime_tests = [] {
         {45, 12, 60, 24},
       };
       expect(eq(
-        dllib::MatrixMultiplication(Tensor<3, 4>(data1), Tensor<4, 3>(data3)), Tensor<3, 3>(mul1)));
+        dllib::MatrixProduct(Tensor<3, 4>(data1), Tensor<4, 3>(data3)), Tensor<3, 3>(mul1)));
       expect(eq(
-        dllib::MatrixMultiplication(Tensor<4, 3>(data3), Tensor<3, 4>(data1)), Tensor<4, 4>(mul2)));
+        dllib::MatrixProduct(Tensor<4, 3>(data3), Tensor<3, 4>(data1)), Tensor<4, 4>(mul2)));
     };
   }
   { // Tensor-matrix, tensor-vector multiplication tests
@@ -89,7 +89,7 @@ static ut::suite tensor_runtime_tests = [] {
           {0, 22, 56},
         },
       };
-      expect(eq(dllib::MatrixMultiplication(Tensor<2, 3, 2>(data1), Tensor<2, 3>(data2)), Tensor<2, 3, 3>(expected)));
+      expect(eq(dllib::MatrixProduct(Tensor<2, 3, 2>(data1), Tensor<2, 3>(data2)), Tensor<2, 3, 3>(expected)));
     };
     "matrix_vector_multiplication"_test = [data1] {
       int data2[2] = {1, 2};
@@ -97,8 +97,8 @@ static ut::suite tensor_runtime_tests = [] {
         {5, 11, 17},
         {7, 13, 13},
       };
-      expect(eq(dllib::MatrixMultiplication(Tensor<2, 3, 2>(data1), Tensor<2>(data2)), Tensor<2, 3>(expected)));
-      expect(eq(dllib::MatrixMultiplication(Tensor<3, 2>(data1[0]), Tensor<2>(data2)), Tensor<3>(expected[0])));
+      expect(eq(dllib::MatrixProduct(Tensor<2, 3, 2>(data1), Tensor<2>(data2)), Tensor<2, 3>(expected)));
+      expect(eq(dllib::MatrixProduct(Tensor<3, 2>(data1[0]), Tensor<2>(data2)), Tensor<3>(expected[0])));
     };
   }
   { // Vector-vector, vector-matrix multiplication tests
@@ -106,7 +106,7 @@ static ut::suite tensor_runtime_tests = [] {
     "vector_vector_multiplication"_test = [data1] {
       int data2[3] = {3, 2, 1};
       int expected = 10;
-      expect(eq(dllib::MatrixMultiplication(Tensor<3>(data1), Tensor<3>(data2)), Tensor<>(expected)));
+      expect(eq(dllib::MatrixProduct(Tensor<3>(data1), Tensor<3>(data2)), Tensor<>(expected)));
     };
     "vector_matrix_multiplication"_test = [data1] {
       int data2[3][2] = {
@@ -115,7 +115,7 @@ static ut::suite tensor_runtime_tests = [] {
         {3, 9},
       };
       int expected[2] = {16, 37};
-      expect(eq(dllib::MatrixMultiplication(Tensor<3>(data1), Tensor<3, 2>(data2)), Tensor<2>(expected)));
+      expect(eq(dllib::MatrixProduct(Tensor<3>(data1), Tensor<3, 2>(data2)), Tensor<2>(expected)));
     };
   }
   "matrix_transpose"_test = [] { // Matrix transpose tests

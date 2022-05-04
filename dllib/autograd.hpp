@@ -220,15 +220,15 @@ TVariable<T> operator*(const TVariable<T>& l, const TVariable<T>& r) {
 }
 
 template<CTensor T1, CTensor T2>
-auto MatrixMultiplication(const IVariable<T1>& l, const IVariable<T2>& r) {
-  struct TMatrixMultiplication {
-    helpers::MatrixMultiplicationResult<T1, T2> Forward(const T1& l, const T2& r) {
+auto MatrixProduct(const IVariable<T1>& l, const IVariable<T2>& r) {
+  struct TMatrixProduct {
+    helpers::MatrixProductResult<T1, T2> Forward(const T1& l, const T2& r) {
       l_ = l;
       r_ = r;
       return MatrixMultiplication(l, r);
     }
 
-    void Backward(const helpers::MatrixMultiplicationResult<T1, T2>& grad,
+    void Backward(const helpers::MatrixProductResult<T1, T2>& grad,
                   std::optional<T1*> l, std::optional<T2*> r) {
       if (l) {
         MatrixMultiplication(grad, r_.T(), **l);
@@ -242,7 +242,7 @@ auto MatrixMultiplication(const IVariable<T1>& l, const IVariable<T2>& r) {
     T2 r_;
   };
 
-  return std::make_shared<TOperationNode<TMatrixMultiplication, T1, T2>>(TMatrixMultiplication{}, l, r);
+  return std::make_shared<TOperationNode<TMatrixProduct, T1, T2>>(TMatrixProduct{}, l, r);
 }
 
 template<CTensor T>

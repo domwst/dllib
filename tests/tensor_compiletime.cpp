@@ -49,8 +49,8 @@ using Tensor = dllib::TTensor<int, Dims...>;
         {50, 37, 35, 39},
         {45, 12, 60, 24},
       };
-      static_assert(dllib::MatrixMultiplication(Tensor<3, 4>(data1), Tensor<4, 3>(data3)) == Tensor<3, 3>(mul1));
-      static_assert(dllib::MatrixMultiplication(Tensor<4, 3>(data3), Tensor<3, 4>(data1)) == Tensor<4, 4>(mul2));
+      static_assert(dllib::MatrixProduct(Tensor<3, 4>(data1), Tensor<4, 3>(data3)) == Tensor<3, 3>(mul1));
+      static_assert(dllib::MatrixProduct(Tensor<4, 3>(data3), Tensor<3, 4>(data1)) == Tensor<4, 4>(mul2));
     }
   }
   { // Tensor-matrix, tensor-vector multiplication tests
@@ -83,7 +83,7 @@ using Tensor = dllib::TTensor<int, Dims...>;
           {0, 22, 56},
         },
       };
-      static_assert(dllib::MatrixMultiplication(Tensor<2, 3, 2>(data1), Tensor<2, 3>(data2)) == Tensor<2, 3, 3>(expected));
+      static_assert(dllib::MatrixProduct(Tensor<2, 3, 2>(data1), Tensor<2, 3>(data2)) == Tensor<2, 3, 3>(expected));
     }
     {
       constexpr int data2[2] = {1, 2};
@@ -91,8 +91,8 @@ using Tensor = dllib::TTensor<int, Dims...>;
         {5, 11, 17},
         {7, 13, 13},
       };
-      static_assert(dllib::MatrixMultiplication(Tensor<2, 3, 2>(data1), Tensor<2>(data2)) == Tensor<2, 3>(expected));
-      static_assert(dllib::MatrixMultiplication(Tensor<3, 2>(data1[0]), Tensor<2>(data2)) == Tensor<3>(expected[0]));
+      static_assert(dllib::MatrixProduct(Tensor<2, 3, 2>(data1), Tensor<2>(data2)) == Tensor<2, 3>(expected));
+      static_assert(dllib::MatrixProduct(Tensor<3, 2>(data1[0]), Tensor<2>(data2)) == Tensor<3>(expected[0]));
     }
   }
   { // Vector-vector, vector-matrix multiplication tests
@@ -100,7 +100,7 @@ using Tensor = dllib::TTensor<int, Dims...>;
     {
       constexpr int data2[3] = {3, 2, 1};
       constexpr int expected = 10;
-      static_assert(dllib::MatrixMultiplication(Tensor<3>(data1), Tensor<3>(data2)) == Tensor<>(expected));
+      static_assert(dllib::MatrixProduct(Tensor<3>(data1), Tensor<3>(data2)) == Tensor<>(expected));
     }
     {
       constexpr int data2[3][2] = {
@@ -109,7 +109,7 @@ using Tensor = dllib::TTensor<int, Dims...>;
         {3, 9},
       };
       constexpr int expected[2] = {16, 37};
-      static_assert(dllib::MatrixMultiplication(Tensor<3>(data1), Tensor<3, 2>(data2)) == Tensor<2>(expected));
+      static_assert(dllib::MatrixProduct(Tensor<3>(data1), Tensor<3, 2>(data2)) == Tensor<2>(expected));
     }
   }
   { // Matrix transpose tests
