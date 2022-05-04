@@ -519,65 +519,6 @@ constexpr TTensor<TData, Dim1, Dim3> MatrixProduct(
   return result;
 }
 
-template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
-constexpr std::enable_if_t<(Tensor::DimensionCount != 2), void> MatrixProduct(
-  const Tensor& tensor,
-  const TTensor<TData, FromDim, ToDim>& matrix,
-  helpers::TMatrixProductResult<Tensor, TTensor<TData, FromDim, ToDim>>& result) {
-
-  if constexpr (Tensor::DimensionCount > 2) {
-    for (std::size_t i = 0; i < tensor.Size(); ++i) {
-      MatrixProduct(tensor[i], matrix, result[i]);
-    }
-  } else {
-    for (std::size_t i = 0; i < FromDim; ++i) {
-      for (std::size_t j = 0; j < ToDim; ++j) {
-        result[j] += tensor[i] * matrix[i][j];
-      }
-    }
-  }
-}
-
-template<class TData, std::size_t FromDim, std::size_t ToDim, CTensorOfType<TData> Tensor>
-constexpr std::enable_if_t<
-  (Tensor::DimensionCount != 2),
-  helpers::TMatrixProductResult<Tensor, TTensor<TData, FromDim, ToDim>>
-> MatrixProduct(
-  const Tensor& tensor,
-  const TTensor<TData, FromDim, ToDim>& matrix) {
-
-  helpers::TMatrixProductResult<Tensor, TTensor<TData, FromDim, ToDim>> result;
-  MatrixProduct(tensor, matrix, result);
-  return result;
-}
-
-template<class TData, std::size_t VDim, CTensorOfType<TData> Tensor>
-constexpr void MatrixProduct(
-  const Tensor& tensor,
-  const TTensor<TData, VDim>& vector,
-  helpers::TMatrixProductResult<Tensor, TTensor<TData, VDim>>& result) {
-
-  if constexpr (Tensor::DimensionCount == 1) {
-    for (std::size_t i = 0; i < VDim; ++i) {
-      result += tensor[i] * vector[i];
-    }
-  } else {
-    for (std::size_t i = 0; i < tensor.Size(); ++i) {
-      MatrixProduct(tensor[i], vector, result[i]);
-    }
-  }
-}
-
-template<class TData, std::size_t VDim, CTensorOfType<TData> Tensor>
-constexpr auto MatrixProduct(
-  const Tensor& tensor,
-  const TTensor<TData, VDim>& vector) {
-
-  helpers::TMatrixProductResult<Tensor, TTensor<TData, VDim>> result;
-  MatrixProduct(tensor, vector, result);
-  return result;
-}
-
 template<CTensor T>
 constexpr typename T::DataType Sum(const T& arg) {
   if constexpr (T::DimensionCount == 0) {
