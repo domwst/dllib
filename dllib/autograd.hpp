@@ -209,7 +209,7 @@ TVariable<T> operator*(const TVariable<T>& l, const TVariable<T>& r) {
         **l += grad * r_;
       }
       if (r) {
-        **r = l_ * grad;
+        **r += l_ * grad;
       }
     }
 
