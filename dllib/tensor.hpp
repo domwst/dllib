@@ -139,6 +139,38 @@ struct TransposeResult<TTensor<TData, Dim1, Dim2>> {
 template<class T>
 using TTransposeResult = typename TransposeResult<T>::type;
 
+template<size_t DimToStop, class TFunction, CTensor TArg>
+struct ApplyFunctionResult {
+  static consteval auto GetDims() {
+    constexpr size_t dims_cut = TArg::DimensionCount - DimToStop;
+    std::array<size_t, dims_cut + TensorInfo<TRetData>::DimensionCount> ret{};
+    std::copy(TArg::Dimensions.begin(), TArg::Dimensions.begin() + dims_cut, ret.begin());
+    if constexpr (VIsTensor<TFunctionRet>) {
+      std::copy(TFunctionRet::Dimensions.begin(), TFunctionRet::Dimensions.end(), ret.begin() + dims_cut);
+    }
+    return ret;
+  }
+
+  template<class T>
+  struct TensorInfo {
+    using TData = T;
+    static constexpr size_t DimensionCount = 0;
+  };
+
+  template<CTensor T>
+  struct TensorInfo<T> {
+    using TData = typename T::TData;
+    static constexpr size_t DimensionCount = T::DimensionCount;
+  };
+
+  using TFunctionRet = std::invoke_result_t<TFunction, typename TArg::template TSubTensor<DimToStop>>;
+  using TRetData = std::conditional_t<VIsTensor<TFunctionRet>, typename TensorInfo<TFunctionRet>::TData, TFunctionRet>;
+  using type = TMakeTensor<TRetData, GetDims()>;
+};
+
+template<size_t DimToStop, class TFunction, CTensor TArg>
+using TApplyFunctionResult = typename ApplyFunctionResult<DimToStop, TFunction, TArg>::type;
+
 }  // namespace helpers
 
 template<class TData>
@@ -151,7 +183,7 @@ class TTensor<TData> {
   static constexpr std::array<size_t, 0> Dimensions{};
 
   template<std::size_t N>
-  using SubTensor = std::conditional_t<N == 0, TTensor, void>;
+  using TSubTensor = std::conditional_t<N == 0, TTensor, void>;
 
 
   constexpr TTensor() : TTensor(0) {
@@ -218,7 +250,7 @@ class TTensor<TData, FirstDim, OtherDims...> {
   static constexpr std::array<std::size_t, DimensionCount> Dimensions = {FirstDim, OtherDims...};
 
   template<std::size_t N>
-  using SubTensor = std::conditional_t<N == DimensionCount, TTensor, typename ElementType::template SubTensor<N>>;
+  using TSubTensor = std::conditional_t<N == DimensionCount, TTensor, typename ElementType::template TSubTensor<N>>;
 
   constexpr TTensor() : TTensor(0) {
   }
@@ -431,8 +463,8 @@ constexpr Tensor operator*(typename Tensor::DataType val, const Tensor& other) {
 }
 
 template<std::size_t DimToStop, class TFunction, CTensor Tensor>
-constexpr std::enable_if_t<(Tensor::DimensionCount >= DimToStop), void>
-ApplyFunctionInplace(TFunction&& function, Tensor& tensor) {
+constexpr void ApplyFunctionInplace(TFunction&& function, Tensor& tensor) {
+  static_assert(Tensor::DimensionCount >= DimToStop);
   if constexpr (Tensor::DimensionCount == DimToStop) {
     tensor = function(tensor.Data());
   } else {
@@ -442,10 +474,10 @@ ApplyFunctionInplace(TFunction&& function, Tensor& tensor) {
   }
 }
 
-template<std::size_t DimToStop, class TFunction, class TSourceData, std::size_t... Dims, CTensorWithDims<Dims...> TensorResult>
-constexpr std::enable_if_t<(sizeof...(Dims) >= DimToStop), void>
-ApplyFunction(TFunction&& function, const TTensor<TSourceData, Dims...>& source, TensorResult& result) {
-  if constexpr (sizeof...(Dims) == DimToStop) {
+template<std::size_t DimToStop, class TFunction, CTensor TSourceTensor, class TResult>
+constexpr void ApplyFunction(TFunction&& function, const TSourceTensor& source, TResult& result) {
+  static_assert(DimToStop <= TSourceTensor::DimensionCount);
+  if constexpr (TSourceTensor::DimensionCount == DimToStop) {
     result = function(source.Data());
   } else {
     for (std::size_t i = 0; i < source.Size(); ++i) {
@@ -454,32 +486,12 @@ ApplyFunction(TFunction&& function, const TTensor<TSourceData, Dims...>& source,
   }
 }
 
-template<class TRetData, std::size_t DimToStop, class TFunction, class TArgumentData, std::size_t... Dims>
-constexpr TTensor<TRetData, Dims...> ApplyFunction(TFunction&& function, const TTensor<TArgumentData, Dims...>& arg) {
-  TTensor<TRetData, Dims...> result;
+template<std::size_t DimToStop, class TFunction, CTensor TArg,
+         class TRetTensor = helpers::TApplyFunctionResult<DimToStop, TFunction, TArg>>
+constexpr TRetTensor ApplyFunction(TFunction&& function, const TArg& arg) {
+  TRetTensor result;
   ApplyFunction<DimToStop>(std::forward<TFunction>(function), arg, result);
   return result;
-}
-
-template<std::size_t DimToStop, class TFunction, CTensor ArgumentTensor>
-constexpr auto ApplyFunction(TFunction&& function, const ArgumentTensor& arg) {
-  if constexpr (DimToStop == 0) {
-    return ApplyFunction<
-      std::invoke_result_t<
-        TFunction,
-        typename ArgumentTensor::template SubTensor<DimToStop>
-      >,
-      DimToStop
-    >(std::forward<TFunction>(function), arg);
-  } else {
-    return ApplyFunction<
-      typename std::invoke_result_t<
-        TFunction,
-        typename ArgumentTensor::template SubTensor<DimToStop>
-      >::DataType,
-      DimToStop
-    >(std::forward<TFunction>(function), arg);
-  }
 }
 
 template<class TData, std::size_t Dim1, std::size_t Dim2, std::size_t Dim3>

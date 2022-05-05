@@ -119,4 +119,51 @@ static ut::suite tensor_runtime_tests = [] {
       expect(eq(v2.View<2, 3, 2>(), v1));
     }
   };
+  "apply_function"_test = [] {
+    int data[2][3][2] = {
+      {
+        {1, 2},
+        {3, 4},
+        {5, 1},
+      },
+      {
+        {0, 9},
+        {1, 8},
+        {2, 7},
+      },
+    };
+    Tensor<2, 3, 2> t(data);
+    {
+      int expected = 43;
+      expect(eq(dllib::ApplyFunction<3>(dllib::Sum<Tensor<2, 3, 2>>, t), Tensor<>(expected)));
+    }
+    {
+      int expected[2] = {16, 27};
+      expect(eq(dllib::ApplyFunction<2>(dllib::Sum<Tensor<3, 2>>, t), Tensor<2>(expected)));
+    }
+    {
+      int expected[2][3] = {
+        {3, 7, 6},
+        {9, 9, 9},
+      };
+      expect(eq(dllib::ApplyFunction<1>(dllib::Sum<Tensor<2>>, t), Tensor<2, 3>(expected)));
+    }
+    {
+      expect(eq(dllib::ApplyFunction<0>(dllib::Sum<Tensor<>>, t), t));
+    }
+    {
+      auto SqLen = [](Tensor<2> v) -> int {
+        int sm = 0;
+        for (int i = 0; i < 2; ++i) {
+          sm += v[i] * v[i];
+        }
+        return sm;
+      };
+      int expected[2][3] = {
+        { 5, 25, 26},
+        {81, 65, 53},
+      };
+      expect(eq(dllib::ApplyFunction<1>(SqLen, t), Tensor<2, 3>(expected)));
+    }
+  };
 };

@@ -68,4 +68,51 @@ using Tensor = dllib::TTensor<int, Dims...>;
     };
     static_assert(Sum(Tensor<2, 3, 2>(data)) == 43);
   }
+  { // ApplyFunction
+    constexpr int data[2][3][2] = {
+      {
+        {1, 2},
+        {3, 4},
+        {5, 1},
+      },
+      {
+        {0, 9},
+        {1, 8},
+        {2, 7},
+      },
+    };
+    constexpr Tensor<2, 3, 2> t(data);
+    {
+      constexpr int expected = 43;
+      static_assert(dllib::ApplyFunction<3>(dllib::Sum<Tensor<2, 3, 2>>, t) == Tensor<>(expected));
+    }
+    {
+      constexpr int expected[2] = {16, 27};
+      static_assert(dllib::ApplyFunction<2>(dllib::Sum<Tensor<3, 2>>, t) == Tensor<2>(expected));
+    }
+    {
+      constexpr int expected[2][3] = {
+        {3, 7, 6},
+        {9, 9, 9},
+      };
+      static_assert(dllib::ApplyFunction<1>(dllib::Sum<Tensor<2>>, t) == Tensor<2, 3>(expected));
+    }
+    {
+      static_assert(dllib::ApplyFunction<0>(dllib::Sum<Tensor<>>, t) == t);
+    }
+    {
+      constexpr auto SqLen = [](Tensor<2> v) -> int {
+        int sm = 0;
+        for (int i = 0; i < 2; ++i) {
+          sm += v[i] * v[i];
+        }
+        return sm;
+      };
+      constexpr int expected[2][3] = {
+        { 5, 25, 26},
+        {81, 65, 53},
+      };
+      static_assert(dllib::ApplyFunction<1>(SqLen, t) == Tensor<2, 3>(expected));
+    }
+  }
 }
