@@ -457,7 +457,7 @@ ApplyFunction(TFunction&& function, const TTensor<TSourceData, Dims...>& source,
 template<class TRetData, std::size_t DimToStop, class TFunction, class TArgumentData, std::size_t... Dims>
 constexpr TTensor<TRetData, Dims...> ApplyFunction(TFunction&& function, const TTensor<TArgumentData, Dims...>& arg) {
   TTensor<TRetData, Dims...> result;
-  ApplyFunction<DimToStop>(std::forward(function), arg, result);
+  ApplyFunction<DimToStop>(std::forward<TFunction>(function), arg, result);
   return result;
 }
 
@@ -470,7 +470,7 @@ constexpr auto ApplyFunction(TFunction&& function, const ArgumentTensor& arg) {
         typename ArgumentTensor::template SubTensor<DimToStop>
       >,
       DimToStop
-    >(std::forward(function), arg);
+    >(std::forward<TFunction>(function), arg);
   } else {
     return ApplyFunction<
       typename std::invoke_result_t<
@@ -478,7 +478,7 @@ constexpr auto ApplyFunction(TFunction&& function, const ArgumentTensor& arg) {
         typename ArgumentTensor::template SubTensor<DimToStop>
       >::DataType,
       DimToStop
-    >(std::forward(function), arg);
+    >(std::forward<TFunction>(function), arg);
   }
 }
 
