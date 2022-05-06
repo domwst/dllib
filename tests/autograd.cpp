@@ -257,4 +257,19 @@ static ut::suite autograd = [] {
     }
     expect(eq(v2->grad, TTensor<int, 2, 2>(0)));
   };
+
+  "transpose"_test = [] {
+    int data[2][2] = {
+      {1, 2},
+      {3, 4},
+    };
+    TVariable<TTensor<int, 2, 2>> v(data, true);
+    Sum(MatrixProduct(v, v.T()))->Backward();
+
+    int expected[2][2] = {
+      {8, 12},
+      {8, 12},
+    };
+    expect(eq(v->grad, TTensor<int, 2, 2>(expected)));
+  };
 };

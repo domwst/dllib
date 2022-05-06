@@ -34,36 +34,53 @@ struct TLeafNode;
 template<class TOperation, CTensor... TArgs>
 struct TOperationNode;
 
-template<CTensor T>
-struct TVariable : public std::shared_ptr<IVariable<T>> {
-  using std::shared_ptr<IVariable<T>>::shared_ptr;
+template<CTensor TT>
+struct TVariable : public std::shared_ptr<IVariable<TT>> {
+  using std::shared_ptr<IVariable<TT>>::shared_ptr;
 
   // NOLINTNEXTLINE
-  TVariable(const T& value, bool required_grad = false)
-    : std::shared_ptr<IVariable<T>>(std::make_shared<TLeafNode<T>>(value, required_grad)) {
+  TVariable(const TT& value, bool required_grad = false)
+    : std::shared_ptr<IVariable<TT>>(std::make_shared<TLeafNode<TT>>(value, required_grad)) {
   }
 
   template<size_t... NewDims>
-  TVariable<TTensor<typename T::DataType, NewDims...>> View() const {
+  TVariable<TTensor<typename TT::DataType, NewDims...>> View() const {
     struct TView {
       _Pragma("clang diagnostic ignored \"-Wunused-local-typedef\"")
-      using ConvertedTensor = TTensor<typename T::DataType, NewDims...>;
+      using ConvertedTensor = TTensor<typename TT::DataType, NewDims...>;
       _Pragma("clang diagnostic warning \"-Wunused-local-typedef\"")
 
-      ConvertedTensor Forward(const T& val) {
+      ConvertedTensor Forward(const TT& val) {
         return val.template View<NewDims...>();
       }
 
-      void Backward(const ConvertedTensor& grad, T* v) {
+      void Backward(const ConvertedTensor& grad, TT* v) {
         if (v) {
           [v, &grad]<size_t... i>(std::index_sequence<i...>) {
-            *v += grad.template View<T::Dimensions[i]...>();
-          }(std::make_index_sequence<T::DimensionCount>{});
+            *v += grad.template View<TT::Dimensions[i]...>();
+          }(std::make_index_sequence<TT::DimensionCount>{});
         }
       }
     };
 
-    return std::make_shared<TOperationNode<TView, T>>(TView{}, *this);
+    return std::make_shared<TOperationNode<TView, TT>>(TView{}, *this);
+  }
+
+  template<class U = TT, class TTransposeResult = helpers::TTransposeResult<U>>
+  TVariable<helpers::TTransposeResult<U>> T() const {
+    struct TTranspose {
+      TTransposeResult Forward(const U& val) {
+        return val.T();
+      }
+
+      void Backward(const TTransposeResult& grad, U* v) {
+        if (v) {
+          *v += grad.T();
+        }
+      }
+    };
+
+    return std::make_shared<TOperationNode<TTranspose, TT>>(TTranspose{}, *this);
   }
 };
 
