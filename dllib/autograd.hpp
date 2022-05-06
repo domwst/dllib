@@ -29,19 +29,10 @@ template<CTensor T>
 struct IVariable;
 
 template<CTensor T>
-struct TLeafNode final : public IVariable<T> {
-  using IVariable<T>::IVariable;
-  using IVariable<T>::value;
-  using IVariable<T>::grad;
-  using IVariable<T>::requires_grad;
-  using IVariable<T>::zero_grad;
+struct TLeafNode;
 
-  [[nodiscard]] std::vector<TArbitraryVariable> GetChildren() const {
-    return {};
-  }
-
-  void PushGradient() {}
-};
+template<class TOperation, CTensor... TArgs>
+struct TOperationNode;
 
 template<CTensor T>
 struct TVariable : public std::shared_ptr<IVariable<T>> {
@@ -50,6 +41,29 @@ struct TVariable : public std::shared_ptr<IVariable<T>> {
   // NOLINTNEXTLINE
   TVariable(const T& value, bool required_grad = false)
     : std::shared_ptr<IVariable<T>>(std::make_shared<TLeafNode<T>>(value, required_grad)) {
+  }
+
+  template<size_t... NewDims>
+  TVariable<TTensor<typename T::DataType, NewDims...>> View() const {
+    struct TView {
+      _Pragma("clang diagnostic ignored \"-Wunused-local-typedef\"")
+      using ConvertedTensor = TTensor<typename T::DataType, NewDims...>;
+      _Pragma("clang diagnostic warning \"-Wunused-local-typedef\"")
+
+      ConvertedTensor Forward(const T& val) {
+        return val.template View<NewDims...>();
+      }
+
+      void Backward(const ConvertedTensor& grad, T* v) {
+        if (v) {
+          [v, &grad]<size_t... i>(std::index_sequence<i...>) {
+            *v += grad.template View<T::Dimensions[i]...>();
+          }(std::make_index_sequence<T::DimensionCount>{});
+        }
+      }
+    };
+
+    return std::make_shared<TOperationNode<TView, T>>(TView{}, *this);
   }
 };
 
@@ -98,6 +112,21 @@ struct IVariable : public IArbitraryVariable {
 
   T value;
   T grad;
+};
+
+template<CTensor T>
+struct TLeafNode final : public IVariable<T> {
+  using IVariable<T>::IVariable;
+  using IVariable<T>::value;
+  using IVariable<T>::grad;
+  using IVariable<T>::requires_grad;
+  using IVariable<T>::zero_grad;
+
+  [[nodiscard]] std::vector<TArbitraryVariable> GetChildren() const {
+    return {};
+  }
+
+  void PushGradient() {}
 };
 
 namespace helpers {
@@ -258,29 +287,6 @@ auto Sum(const TVariable<T>& val) {
   };
 
   return std::make_shared<TOperationNode<TSum, T>>(TSum{}, val);
-}
-
-template<size_t... NewDims, CTensor T>
-TVariable<TTensor<typename T::DataType, NewDims...>> View(const TVariable<T>& tensor) {
-  struct TView {
-    _Pragma("clang diagnostic ignored \"-Wunused-local-typedef\"")
-    using ConvertedTensor = TTensor<typename T::DataType, NewDims...>;
-    _Pragma("clang diagnostic warning \"-Wunused-local-typedef\"")
-
-    ConvertedTensor Forward(const T& val) {
-      return val.template View<NewDims...>();
-    }
-
-    void Backward(const ConvertedTensor& grad, T* v) {
-      if (v) {
-        [v, &grad]<size_t... i>(std::index_sequence<i...>) {
-          *v += grad.template View<T::Dimensions[i]...>();
-        }(std::make_index_sequence<T::DimensionCount>{});
-      }
-    }
-  };
-
-  return std::make_shared<TOperationNode<TView, T>>(TView{}, tensor);
 }
 
 }

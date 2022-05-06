@@ -176,14 +176,14 @@ static ut::suite autograd = [] {
     TVariable v1(t, true);
 
     {
-      auto v2 = View<3, 4>(v1);
+      auto v2 = v1.View<3, 4>();
       expect(eq(v2->value, t.View<3, 4>()));
       Sum(v2)->Backward();
     }
     expect(eq(v1->grad, TTensor<int, 2, 3, 2>(1)));
 
     {
-      auto v2 = View<12>(v1);
+      auto v2 = v1.View<12>();
       expect(eq(v2->value, t.View<12>()));
       Sum(v2)->Backward();
     }
