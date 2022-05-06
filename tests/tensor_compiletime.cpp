@@ -1,6 +1,6 @@
 #include <dllib/tensor.hpp>
 
-template<std::size_t... Dims>
+template<size_t... Dims>
 using Tensor = dllib::TTensor<int, Dims...>;
 
 [[maybe_unused]] static consteval void StaticChecks() {

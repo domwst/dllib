@@ -3,7 +3,7 @@
 
 namespace ut = boost::ut;
 
-template<std::size_t... Dims>
+template<size_t... Dims>
 using Tensor = dllib::TTensor<int, Dims...>;
 
 static ut::suite tensor_runtime_tests = [] {

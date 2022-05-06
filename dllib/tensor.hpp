@@ -11,7 +11,7 @@
 
 namespace dllib {
 
-template<class TData, std::size_t... Dims>
+template<class TData, size_t... Dims>
 class TTensor;
 
 namespace helpers {
@@ -20,7 +20,7 @@ template<class>
 struct TIsTensorHelper : std::false_type {
 };
 
-template<class TData, std::size_t... Dims>
+template<class TData, size_t... Dims>
 struct TIsTensorHelper<TTensor<TData, Dims...>> : std::true_type {
 };
 
@@ -28,15 +28,15 @@ template<class, class>
 struct TIsTensorOfTypeHelper : std::false_type {
 };
 
-template<class TData, std::size_t... Dims>
+template<class TData, size_t... Dims>
 struct TIsTensorOfTypeHelper<TTensor<TData, Dims...>, TData> : std::true_type {
 };
 
-template<class, std::size_t...>
+template<class, size_t...>
 struct TIsTensorWithDimsHelper : std::false_type {
 };
 
-template<class TData, std::size_t... Dims>
+template<class TData, size_t... Dims>
 struct TIsTensorWithDimsHelper<TTensor<TData, Dims...>, Dims...> : std::true_type {
 };
 
@@ -65,14 +65,14 @@ template<class T, class TData>
 concept CTensorOfType = VIsTensorOfType<T, TData>;
 
 
-template<class T, std::size_t... Dims>
+template<class T, size_t... Dims>
 constexpr bool VIsTensorWithDims = helpers::TIsTensorWithDimsHelper<std::remove_cvref_t<T>, Dims...>::value;
 
-template<class T, std::size_t... Dims>
+template<class T, size_t... Dims>
 struct TIsTensorWithDims : std::bool_constant<VIsTensorWithDims<T, Dims...>> {
 };
 
-template<class T, std::size_t... Dims>
+template<class T, size_t... Dims>
 concept CTensorWithDims = VIsTensorWithDims<T, Dims...>;
 
 
@@ -98,7 +98,7 @@ template<class, std::array, class>
 struct MakeTensorHelper {
 };
 
-template<class TData, std::size_t N, std::array<std::size_t, N> Dims, std::size_t... I>
+template<class TData, size_t N, std::array<size_t, N> Dims, size_t... I>
 struct MakeTensorHelper<TData, Dims, std::index_sequence<I...>> {
   using type = TTensor<TData, Dims[I]...>;
 };
@@ -107,7 +107,7 @@ template<class, std::array>
 struct MakeTensor {
 };
 
-template<class TData, std::size_t N, std::array<std::size_t, N> Dims>
+template<class TData, size_t N, std::array<size_t, N> Dims>
 struct MakeTensor<TData, Dims> {
   using type = typename MakeTensorHelper<TData, Dims, std::make_index_sequence<N>>::type;
 };
@@ -119,7 +119,7 @@ template<class, class>
 struct MatrixProductResult {
 };
 
-template<class TData, std::size_t Dim1, std::size_t Dim2, std::size_t Dim3>
+template<class TData, size_t Dim1, size_t Dim2, size_t Dim3>
 struct MatrixProductResult<TTensor<TData, Dim1, Dim2>, TTensor<TData, Dim2, Dim3>> {
   using type = TTensor<TData, Dim1, Dim3>;
 };
@@ -131,7 +131,7 @@ template<class>
 struct TransposeResult {
 };
 
-template<class TData, std::size_t Dim1, std::size_t Dim2>
+template<class TData, size_t Dim1, size_t Dim2>
 struct TransposeResult<TTensor<TData, Dim1, Dim2>> {
   using type = TTensor<TData, Dim2, Dim1>;
 };
@@ -178,11 +178,11 @@ class TTensor<TData> {
  public:
 
   using DataType = TData;
-  static constexpr std::size_t TotalElements = 1;
-  static constexpr std::size_t DimensionCount = 0;
+  static constexpr size_t TotalElements = 1;
+  static constexpr size_t DimensionCount = 0;
   static constexpr std::array<size_t, 0> Dimensions{};
 
-  template<std::size_t N>
+  template<size_t N>
   using TSubTensor = std::conditional_t<N == 0, TTensor, void>;
 
 
@@ -199,13 +199,13 @@ class TTensor<TData> {
     return *this;
   }
 
-  template<std::size_t... NewDims>
+  template<size_t... NewDims>
   const TTensor<TData, NewDims...>& View() const {
     static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
     return *reinterpret_cast<const TTensor<TData, NewDims...>*>(this);
   }
 
-  template<std::size_t... NewDims>
+  template<size_t... NewDims>
   TTensor<TData, NewDims...>& View() {
     static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
     return *reinterpret_cast<TTensor<TData, NewDims...>*>(this);
@@ -237,7 +237,7 @@ class TTensor<TData> {
   TData data_;
 };
 
-template<class TData, std::size_t FirstDim, std::size_t... OtherDims>
+template<class TData, size_t FirstDim, size_t... OtherDims>
 class TTensor<TData, FirstDim, OtherDims...> {
  public:
 
@@ -245,11 +245,11 @@ class TTensor<TData, FirstDim, OtherDims...> {
   using ElementType = TTensor<TData, OtherDims...>;
   using ContainerType = std::array<ElementType, FirstDim>;
 
-  static constexpr std::size_t TotalElements = ElementType::TotalElements * FirstDim;
-  static constexpr std::size_t DimensionCount = sizeof...(OtherDims) + 1;
-  static constexpr std::array<std::size_t, DimensionCount> Dimensions = {FirstDim, OtherDims...};
+  static constexpr size_t TotalElements = ElementType::TotalElements * FirstDim;
+  static constexpr size_t DimensionCount = sizeof...(OtherDims) + 1;
+  static constexpr std::array<size_t, DimensionCount> Dimensions = {FirstDim, OtherDims...};
 
-  template<std::size_t N>
+  template<size_t N>
   using TSubTensor = std::conditional_t<N == DimensionCount, TTensor, typename ElementType::template TSubTensor<N>>;
 
   constexpr TTensor() : TTensor(0) {
@@ -274,14 +274,14 @@ class TTensor<TData, FirstDim, OtherDims...> {
   constexpr TTensor(const T& value) : TTensor(std::begin(value), std::end(value)) {}
 
   constexpr TTensor& operator+=(const TTensor& other) {
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] += other[i];
     }
     return *this;
   }
 
   constexpr TTensor& operator+=(TData val) {
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] += val;
     }
     return *this;
@@ -296,14 +296,14 @@ class TTensor<TData, FirstDim, OtherDims...> {
   }
 
   constexpr TTensor& operator-=(const TTensor& other) {
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] -= other[i];
     }
     return *this;
   }
 
   constexpr TTensor& operator-=(TData val) {
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] -= val;
     }
     return *this;
@@ -318,14 +318,14 @@ class TTensor<TData, FirstDim, OtherDims...> {
   }
 
   constexpr TTensor& operator*=(const TTensor& other) {
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] *= other[i];
     }
     return *this;
   }
 
   constexpr TTensor& operator*=(TData val) {
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] *= val;
     }
     return *this;
@@ -340,14 +340,14 @@ class TTensor<TData, FirstDim, OtherDims...> {
   }
 
   constexpr TTensor& operator/=(const TTensor& other) {
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] /= other[i];
     }
     return *this;
   }
 
   constexpr TTensor& operator/=(TData val) {
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] /= val;
     }
     return *this;
@@ -365,28 +365,28 @@ class TTensor<TData, FirstDim, OtherDims...> {
     return TTensor(*this) *= TData(-1);
   }
 
-  constexpr const ElementType& operator[](std::size_t idx) const {
+  constexpr const ElementType& operator[](size_t idx) const {
     return data_[idx];
   }
 
-  constexpr ElementType& operator[](std::size_t idx) {
+  constexpr ElementType& operator[](size_t idx) {
     return data_[idx];
   }
 
-  template<std::size_t... NewDims>
+  template<size_t... NewDims>
   const TTensor<TData, NewDims...>& View() const {
     static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
     return *reinterpret_cast<const TTensor<TData, NewDims...>*>(this);
   }
 
-  template<std::size_t... NewDims>
+  template<size_t... NewDims>
   TTensor<TData, NewDims...>& View() {
     static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
     return *reinterpret_cast<TTensor<TData, NewDims...>*>(this);
   }
 
   constexpr TTensor& FillWith(TData val) {
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i].FillWith(val);
     }
     return *this;
@@ -399,7 +399,7 @@ class TTensor<TData, FirstDim, OtherDims...> {
     } else {
       assert(std::distance(begin, end) == FirstDim);
     }
-    for (std::size_t i = 0; i < FirstDim; ++i) {
+    for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] = *begin;
       ++begin;
     }
@@ -429,15 +429,15 @@ class TTensor<TData, FirstDim, OtherDims...> {
   template<class T = TTensor>
   constexpr auto T() const { // FIX HERE
     helpers::TTransposeResult<T> result;
-    for (std::size_t i = 0; i < Size(); ++i) {
-      for (std::size_t j = 0; j < data_[i].Size(); ++j) {
+    for (size_t i = 0; i < Size(); ++i) {
+      for (size_t j = 0; j < data_[i].Size(); ++j) {
         result[j][i] = data_[i][j];
       }
     }
     return result;
   }
 
-  constexpr static std::size_t Size() {
+  constexpr static size_t Size() {
     return FirstDim;
   }
 
@@ -462,31 +462,31 @@ constexpr Tensor operator*(typename Tensor::DataType val, const Tensor& other) {
   return Tensor(other) *= val;
 }
 
-template<std::size_t DimToStop, class TFunction, CTensor Tensor>
+template<size_t DimToStop, class TFunction, CTensor Tensor>
 constexpr void ApplyFunctionInplace(TFunction&& function, Tensor& tensor) {
   static_assert(Tensor::DimensionCount >= DimToStop);
   if constexpr (Tensor::DimensionCount == DimToStop) {
     tensor = function(tensor.Data());
   } else {
-    for (std::size_t i = 0; i < tensor.Size(); ++i) {
+    for (size_t i = 0; i < tensor.Size(); ++i) {
       ApplyFunctionInplace<DimToStop>(function, tensor[i]);
     }
   }
 }
 
-template<std::size_t DimToStop, class TFunction, CTensor TSourceTensor, class TResult>
+template<size_t DimToStop, class TFunction, CTensor TSourceTensor, class TResult>
 constexpr void ApplyFunction(TFunction&& function, const TSourceTensor& source, TResult& result) {
   static_assert(DimToStop <= TSourceTensor::DimensionCount);
   if constexpr (TSourceTensor::DimensionCount == DimToStop) {
     result = function(source.Data());
   } else {
-    for (std::size_t i = 0; i < source.Size(); ++i) {
+    for (size_t i = 0; i < source.Size(); ++i) {
       ApplyFunction<DimToStop>(function, source[i], result[i]);
     }
   }
 }
 
-template<std::size_t DimToStop, class TFunction, CTensor TArg,
+template<size_t DimToStop, class TFunction, CTensor TArg,
          class TRetTensor = helpers::TApplyFunctionResult<DimToStop, TFunction, TArg>>
 constexpr TRetTensor ApplyFunction(TFunction&& function, const TArg& arg) {
   TRetTensor result;
@@ -494,22 +494,22 @@ constexpr TRetTensor ApplyFunction(TFunction&& function, const TArg& arg) {
   return result;
 }
 
-template<class TData, std::size_t Dim1, std::size_t Dim2, std::size_t Dim3>
+template<class TData, size_t Dim1, size_t Dim2, size_t Dim3>
 constexpr void MatrixProduct(
   const TTensor<TData, Dim1, Dim2>& matrix1,
   const TTensor<TData, Dim2, Dim3>& matrix2,
   TTensor<TData, Dim1, Dim3>& result) {
 
-  for (std::size_t i = 0; i < Dim1; ++i) {
-    for (std::size_t j = 0; j < Dim2; ++j) {
-      for (std::size_t k = 0; k < Dim3; ++k) {
+  for (size_t i = 0; i < Dim1; ++i) {
+    for (size_t j = 0; j < Dim2; ++j) {
+      for (size_t k = 0; k < Dim3; ++k) {
         result[i][k] += matrix1[i][j] * matrix2[j][k];
       }
     }
   }
 }
 
-template<class TData, std::size_t Dim1, std::size_t Dim2, std::size_t Dim3>
+template<class TData, size_t Dim1, size_t Dim2, size_t Dim3>
 constexpr TTensor<TData, Dim1, Dim3> MatrixProduct(
   const TTensor<TData, Dim1, Dim2>& matrix1,
   const TTensor<TData, Dim2, Dim3>& matrix2) {
@@ -525,7 +525,7 @@ constexpr typename T::DataType Sum(const T& arg) {
     return arg;
   } else {
     typename T::DataType sm = 0;
-    for (std::size_t i = 0; i < arg.Size(); ++i) {
+    for (size_t i = 0; i < arg.Size(); ++i) {
       sm += Sum(arg[i]);
     }
     return sm;
