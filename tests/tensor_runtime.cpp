@@ -57,6 +57,8 @@ static ut::suite tensor_runtime_tests = [] {
         dllib::MatrixProduct(Tensor<3, 4>(data1), Tensor<4, 3>(data3)), Tensor<3, 3>(mul1)));
       expect(eq(
         dllib::MatrixProduct(Tensor<4, 3>(data3), Tensor<3, 4>(data1)), Tensor<4, 4>(mul2)));
+      expect(eq(dllib::MatrixProductTransposed(Tensor<3, 4>(data1), Tensor<4, 3>(data3).T()), Tensor<3, 3>(mul1)));
+      expect(eq(dllib::MatrixProductTransposed(Tensor<4, 3>(data3), Tensor<3, 4>(data1).T()), Tensor<4, 4>(mul2)));
     };
   }
   "matrix_transpose"_test = [] { // Matrix transpose tests

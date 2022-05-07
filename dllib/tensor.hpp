@@ -519,6 +519,31 @@ constexpr TTensor<TData, Dim1, Dim3> MatrixProduct(
   return result;
 }
 
+template<class TData, size_t Dim1, size_t Dim2, size_t Dim3>
+constexpr void MatrixProductTransposed(
+  const TTensor<TData, Dim1, Dim2>& matrix1,
+  const TTensor<TData, Dim3, Dim2>& matrix2_T,
+  TTensor<TData, Dim1, Dim3>& result) {
+
+  for (size_t i = 0; i < Dim1; ++i) {
+    for (size_t j = 0; j < Dim3; ++j) {
+      for (size_t k = 0; k < Dim2; ++k) {
+        result[i][j] += matrix1[i][k] * matrix2_T[j][k];
+      }
+    }
+  }
+}
+
+template<class TData, size_t Dim1, size_t Dim2, size_t Dim3>
+constexpr TTensor<TData, Dim1, Dim3> MatrixProductTransposed(
+  const TTensor<TData, Dim1, Dim2>& matrix1,
+  const TTensor<TData, Dim3, Dim2>& matrix2_T) {
+
+  TTensor<TData, Dim1, Dim3> result;
+  MatrixProductTransposed(matrix1, matrix2_T, result);
+  return result;
+}
+
 template<CTensor T>
 constexpr typename T::DataType Sum(const T& arg) {
   if constexpr (T::DimensionCount == 0) {

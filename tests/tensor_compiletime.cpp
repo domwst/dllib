@@ -51,6 +51,8 @@ using Tensor = dllib::TTensor<int, Dims...>;
       };
       static_assert(dllib::MatrixProduct(Tensor<3, 4>(data1), Tensor<4, 3>(data3)) == Tensor<3, 3>(mul1));
       static_assert(dllib::MatrixProduct(Tensor<4, 3>(data3), Tensor<3, 4>(data1)) == Tensor<4, 4>(mul2));
+      static_assert(dllib::MatrixProductTransposed(Tensor<3, 4>(data1), Tensor<4, 3>(data3).T()) == Tensor<3, 3>(mul1));
+      static_assert(dllib::MatrixProductTransposed(Tensor<4, 3>(data3), Tensor<3, 4>(data1).T()) == Tensor<4, 4>(mul2));
     }
   }
   { // Sum tests
