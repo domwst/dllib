@@ -259,6 +259,9 @@ class TTensor<TData, FirstDim, OtherDims...> {
     FillWith(val);
   }
 
+  constexpr TTensor(const std::initializer_list<ElementType>& init) : TTensor(init.begin(), init.end()) {
+  }
+
   template<class TForwardIt>
   constexpr TTensor(TForwardIt begin, TForwardIt end) {
     FillWith(begin, end);
