@@ -31,29 +31,6 @@ using Tensor = dllib::TTensor<int, Dims...>;
       };
       static_assert(Tensor<3, 4>(data1) - Tensor<3, 4>(data2) == Tensor<3, 4>(diff));
     }
-    { // Matrix multiplication tests
-      constexpr int data3[4][3] = {
-        {4, 2, 7},
-        {2, 5, 4},
-        {5, 3, 1},
-        {0, 3, 6},
-      };
-      constexpr int mul1[3][3] = {
-        {35, 55, 75},
-        {76, 66, 119},
-        {46, 34, 35},
-      };
-      constexpr int mul2[4][4] = {
-        {55, 42, 62, 28},
-        {65, 22, 66, 46},
-        {50, 37, 35, 39},
-        {45, 12, 60, 24},
-      };
-      static_assert(dllib::MatrixProduct(Tensor<3, 4>(data1), Tensor<4, 3>(data3)) == Tensor<3, 3>(mul1));
-      static_assert(dllib::MatrixProduct(Tensor<4, 3>(data3), Tensor<3, 4>(data1)) == Tensor<4, 4>(mul2));
-      static_assert(dllib::MatrixProductTransposed(Tensor<3, 4>(data1), Tensor<4, 3>(data3).T()) == Tensor<3, 3>(mul1));
-      static_assert(dllib::MatrixProductTransposed(Tensor<4, 3>(data3), Tensor<3, 4>(data1).T()) == Tensor<4, 4>(mul2));
-    }
   }
   { // Sum tests
     constexpr int data[2][3][2] = {
