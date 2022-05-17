@@ -90,7 +90,7 @@ struct IVariable : public IArbitraryVariable {
   using IArbitraryVariable::requires_grad;
 
   // NOLINTNEXTLINE
-  IVariable(const T& value, bool requires_grad = false) : IArbitraryVariable(requires_grad), value(value) {}
+  IVariable(const T& value, bool requires_grad = false) : IArbitraryVariable(requires_grad), value(value), grad(0) {}
 
   ~IVariable() override = default;
 
