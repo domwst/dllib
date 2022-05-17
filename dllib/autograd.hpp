@@ -123,7 +123,7 @@ struct IVariable : public IArbitraryVariable {
     }
   }
 
-  void zero_grad() {
+  void ZeroGrad() {
     grad.FillWith(0);
   }
 
@@ -137,7 +137,7 @@ struct TLeafNode final : public IVariable<T> {
   using IVariable<T>::value;
   using IVariable<T>::grad;
   using IVariable<T>::requires_grad;
-  using IVariable<T>::zero_grad;
+  using IVariable<T>::ZeroGrad;
 
   [[nodiscard]] std::vector<TArbitraryVariable> GetChildren() const {
     return {};
@@ -172,7 +172,7 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
   using IVariable<TValue>::value;
   using IVariable<TValue>::grad;
   using IVariable<TValue>::requires_grad;
-  using IVariable<TValue>::zero_grad;
+  using IVariable<TValue>::ZeroGrad;
 
   // NOLINTNEXTLINE
   TOperationNode(TOperation op, const TVariable<TArgs>& ... args) :
@@ -192,7 +192,7 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
     [this]<size_t... i>(std::index_sequence<i...>) {
       operation_.Backward(grad, helpers::GetGradientPointerIfRequired(get<i>(args_))...);
     }(std::make_index_sequence<sizeof...(TArgs)>());
-    zero_grad();
+    ZeroGrad();
   }
 
  private:
