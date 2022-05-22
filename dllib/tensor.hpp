@@ -40,8 +40,15 @@ template<class TData, size_t... Dims>
 struct TIsTensorWithDimsHelper<TTensor<TData, Dims...>, Dims...> : std::true_type {
 };
 
-}  // namespace helpers
+template<class, class>
+struct TToType;
 
+template<class TDestData, class TData, size_t... Dims>
+struct TToType<TDestData, TTensor<TData, Dims...>> {
+  using type = TTensor<TDestData, Dims...>;
+};
+
+}  // namespace helpers
 
 template<class T>
 constexpr bool VIsTensor = helpers::TIsTensorHelper<std::remove_cvref_t<T>>::value;
@@ -173,6 +180,9 @@ using TApplyFunctionResult = typename ApplyFunctionResult<DimToStop, TFunction, 
 
 }  // namespace helpers
 
+template<class TData, std::array Dimensions>
+using TMakeTensor = helpers::TMakeTensor<TData, Dimensions>;
+
 template<class TData>
 class TTensor<TData> {
  public:
@@ -212,6 +222,11 @@ class TTensor<TData> {
 
   constexpr TTensor& FillWith(TData val) {
     return (*this) = val;
+  }
+
+  template<class TOtherData>
+  constexpr auto To() const {
+    return TMakeTensor<TOtherData, Dimensions>(Data());
   }
 
   constexpr TData Data() const {
@@ -436,6 +451,11 @@ class TTensor<TData, FirstDim, OtherDims...> {
       }
     }
     return result;
+  }
+
+  template<class TOtherData>
+  constexpr auto To() const {
+    return TMakeTensor<TOtherData, Dimensions>(begin(), end());
   }
 
   constexpr static size_t Size() {
