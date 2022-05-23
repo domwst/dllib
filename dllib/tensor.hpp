@@ -8,6 +8,7 @@
 #include <utility>
 #include <string_view>
 #include <ostream>
+#include <cmath>
 
 namespace dllib {
 
@@ -563,6 +564,18 @@ TTensor<TData, Dim1, Dim3> MatrixProductTransposed(
   TTensor<TData, Dim1, Dim3> result;
   MatrixProductTransposed(matrix1, matrix2_T, result);
   return result;
+}
+
+template<CTensor T>
+T sqrt(T inp) {
+  ApplyFunctionInplace<0>(static_cast<typename T::DataType (*)(typename T::DataType)>(std::sqrt), inp);
+  return inp;
+}
+
+template<CTensor T>
+T log(T inp) {
+  ApplyFunctionInplace<0>(static_cast<typename T::DataType (*)(typename T::DataType)>(std::log), inp);
+  return inp;
 }
 
 template<CTensor T>
