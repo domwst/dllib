@@ -127,7 +127,7 @@ struct IVariable : public IArbitraryVariable {
     grad.FillWith(0);
   }
 
-  T value;
+  const T value;
   T grad;
 };
 
@@ -178,7 +178,12 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
   TOperationNode(TOperation op, const TVariable<TArgs>& ... args) :
     IVariable<TValue>(op.Forward(args->value...), helpers::CalculateOr(args->requires_grad...)),
     operation_(std::move(op)),
-    args_({args...}) {}
+    args_({args...}) {
+
+    if (!requires_grad) {
+      args_ = {};
+    }
+  }
 
   TOperationNode(TOperationNode&&) noexcept = default;
 
