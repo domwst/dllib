@@ -195,7 +195,27 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
 
   void PushGradient() {
     [this]<size_t... i>(std::index_sequence<i...>) {
-      operation_.Backward(grad, helpers::GetGradientPointerIfRequired(get<i>(args_))...);
+      constexpr bool pointers_callable = std::is_invocable_v<
+        decltype(&TOperation::Backward),
+        TOperation*,
+        const TValue&,
+        decltype(&(get<i>(args_)->grad))...>;
+
+      constexpr bool variables_callable = std::is_invocable_v<
+        decltype(&TOperation::Backward),
+        TOperation*,
+        const TValue&,
+        decltype(get<i>(args_))...>;
+
+      static_assert(pointers_callable || variables_callable,
+        "TOperation::Backward should be callable either with " \
+        "pointers to tensors or with variables as arguments");
+
+      if constexpr (pointers_callable) {
+        operation_.Backward(grad, helpers::GetGradientPointerIfRequired(get<i>(args_))...);
+      } else if constexpr (variables_callable) {
+        operation_.Backward(grad, get<i>(args_)...);
+      }
     }(std::make_index_sequence<sizeof...(TArgs)>());
     ZeroGrad();
   }
@@ -249,21 +269,17 @@ template<CTensor T>
 TVariable<T> operator*(const TVariable<T>& l, const TVariable<T>& r) {
   struct TMultiplication {
     T Forward(const T& l, const T& r) {
-      l_ = l;
-      r_ = r;
       return l * r;
     }
 
-    void Backward(const T& grad, T* l, T* r) {
-      if (l) {
-        *l += grad * r_;
+    void Backward(const T& grad, TVariable<T>& l, TVariable<T>& r) {
+      if (l->requires_grad) {
+        l->grad += grad * r->value;
       }
-      if (r) {
-        *r += l_ * grad;
+      if (r->requires_grad) {
+        r->grad += l->value * grad;
       }
     }
-
-    T l_, r_;
   };
 
   return std::make_shared<TOperationNode<TMultiplication, T, T>>(TMultiplication{}, l, r);
@@ -273,22 +289,17 @@ template<CTensor T1, CTensor T2>
 TVariable<helpers::TMatrixProductResult<T1, T2>> MatrixProduct(const TVariable<T1>& l, const TVariable<T2>& r) {
   struct TMatrixProduct {
     helpers::TMatrixProductResult<T1, T2> Forward(const T1& l, const T2& r) {
-      l_ = l;
-      r_ = r;
       return MatrixProduct(l, r);
     }
 
-    void Backward(const helpers::TMatrixProductResult<T1, T2>& grad, T1* l, T2* r) {
-      if (l) {
-        MatrixProduct(grad, r_.T(), *l);
+    void Backward(const helpers::TMatrixProductResult<T1, T2>& grad, TVariable<T1>& l, TVariable<T2>& r) {
+      if (l->requires_grad) {
+        MatrixProduct(grad, r->value.T(), l->grad);
       }
-      if (r) {
-        MatrixProduct(l_.T(), grad, *r);
+      if (r->requires_grad) {
+        MatrixProduct(l->value.T(), grad, r->grad);
       }
     };
-
-    T1 l_;
-    T2 r_;
   };
 
   return std::make_shared<TOperationNode<TMatrixProduct, T1, T2>>(TMatrixProduct{}, l, r);
