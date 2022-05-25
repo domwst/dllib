@@ -206,7 +206,13 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
         const TValue&,
         decltype(get<i>(args_))...>;
 
-      static_assert(pointers_callable || variables_callable,
+      constexpr bool callable_with_current_variable = std::is_invocable_v<
+        decltype(&TOperation::Backward),
+        TOperation*,
+        const TVariable<TValue>&,
+        decltype(get<i>(args_))...>;
+
+      static_assert(pointers_callable || variables_callable || callable_with_current_variable,
         "TOperation::Backward should be callable either with " \
         "pointers to tensors or with variables as arguments");
 
@@ -214,6 +220,8 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
         operation_.Backward(grad, helpers::GetGradientPointerIfRequired(get<i>(args_))...);
       } else if constexpr (variables_callable) {
         operation_.Backward(grad, get<i>(args_)...);
+      } else if constexpr (callable_with_current_variable) {
+        operation_.Backward(*this, get<i>(args_)...);
       }
     }(std::make_index_sequence<sizeof...(TArgs)>());
     ZeroGrad();
