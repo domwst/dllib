@@ -330,6 +330,23 @@ TVariable<T> Log(const TVariable<T>& val) {
 }
 
 template<CTensor T>
+TVariable<T> Sqrt(const TVariable<T>& val) {
+  struct TSqrt {
+    T Forward(const T& val) {
+      return Sqrt(val);
+    }
+
+    void Backward(const IVariable<T>* current, TVariable<T>& parent) {
+      if (parent->requires_grad) {
+        parent->grad += T(1. / 2) / current->value;
+      }
+    }
+  };
+
+  return std::make_shared<TOperationNode<TSqrt, T>>(TSqrt{}, val);
+}
+
+template<CTensor T>
 auto Sum(const TVariable<T>& val) {
   struct TSum {
     TTensor<typename T::DataType> Forward(const T& val) {
