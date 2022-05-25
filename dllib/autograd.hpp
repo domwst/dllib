@@ -221,7 +221,7 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
       } else if constexpr (variables_callable) {
         operation_.Backward(grad, get<i>(args_)...);
       } else if constexpr (callable_with_current_variable) {
-        operation_.Backward(*this, get<i>(args_)...);
+        operation_.Backward(this, get<i>(args_)...);
       }
     }(std::make_index_sequence<sizeof...(TArgs)>());
     ZeroGrad();
