@@ -63,21 +63,21 @@ using Tensor = dllib::TTensor<int, Dims...>;
     constexpr Tensor<2, 3, 2> t(data);
     {
       constexpr int expected = 43;
-      static_assert(dllib::ApplyFunction<3>(dllib::Sum<Tensor<2, 3, 2>>, t) == Tensor<>(expected));
+      static_assert(dllib::ApplyFunction<0>(dllib::Sum<Tensor<2, 3, 2>>, t) == Tensor<>(expected));
     }
     {
       constexpr int expected[2] = {16, 27};
-      static_assert(dllib::ApplyFunction<2>(dllib::Sum<Tensor<3, 2>>, t) == Tensor<2>(expected));
+      static_assert(dllib::ApplyFunction<1>(dllib::Sum<Tensor<3, 2>>, t) == Tensor<2>(expected));
     }
     {
       constexpr int expected[2][3] = {
         {3, 7, 6},
         {9, 9, 9},
       };
-      static_assert(dllib::ApplyFunction<1>(dllib::Sum<Tensor<2>>, t) == Tensor<2, 3>(expected));
+      static_assert(dllib::ApplyFunction<2>(dllib::Sum<Tensor<2>>, t) == Tensor<2, 3>(expected));
     }
     {
-      static_assert(dllib::ApplyFunction<0>(dllib::Sum<Tensor<>>, t) == t);
+      static_assert(dllib::ApplyFunction<3>(dllib::Sum<Tensor<>>, t) == t);
     }
     {
       constexpr auto SqLen = [](Tensor<2> v) -> int {
@@ -91,7 +91,43 @@ using Tensor = dllib::TTensor<int, Dims...>;
         { 5, 25, 26},
         {81, 65, 53},
       };
-      static_assert(dllib::ApplyFunction<1>(SqLen, t) == Tensor<2, 3>(expected));
+      static_assert(dllib::ApplyFunction<2>(SqLen, t) == Tensor<2, 3>(expected));
     }
+  }
+  {  // ApplyFunction with multiple arguments
+    constexpr int data1[2][3][2] = {
+      {
+        {1, 2},
+        {3, 4},
+        {5, 1},
+      },
+      {
+        {0, 9},
+        {1, 8},
+        {2, 7},
+      },
+    };
+    constexpr int data2[2][3][2] = {
+      {
+        {2, 7},
+        {5, 1},
+        {0, 9},
+      },
+      {
+        {1, 8},
+        {3, 4},
+        {1, 2},
+      },
+    };
+    constexpr int expected[2][3] = {
+      {16, 19,  9},
+      {72, 35, 16},
+    };
+    auto scalar_product = [](const Tensor<2>& a, const Tensor<2>& b) {
+      return Sum(a * b);
+    };
+    static_assert(
+      ApplyFunction<2>(scalar_product, Tensor<2, 3, 2>(data1), Tensor<2, 3, 2>(data2)) ==
+      Tensor<2, 3>(expected));
   }
 }

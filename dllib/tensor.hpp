@@ -9,6 +9,7 @@
 #include <string_view>
 #include <ostream>
 #include <cmath>
+#include <tuple>
 
 namespace dllib {
 
@@ -130,14 +131,15 @@ struct TransposeResult<TTensor<TData, Dim1, Dim2>> {
 template<class T>
 using TTransposeResult = typename TransposeResult<T>::type;
 
-template<size_t DimToStop, class TFunction, CTensor TArg>
+template<size_t DimsToSkip, class TFunction, CTensor... TArgs>
 struct ApplyFunctionResult {
   static consteval auto GetDims() {
-    constexpr size_t dims_cut = TArg::DimensionCount - DimToStop;
-    std::array<size_t, dims_cut + TensorInfo<TRetData>::DimensionCount> ret{};
-    std::copy(TArg::Dimensions.begin(), TArg::Dimensions.begin() + dims_cut, ret.begin());
+    using TFirstArg = std::tuple_element_t<0, std::tuple<TArgs...>>;
+
+    std::array<size_t, DimsToSkip + TensorInfo<TRetData>::DimensionCount> ret{};
+    std::copy(TFirstArg::Dimensions.begin(), TFirstArg::Dimensions.begin() + DimsToSkip, ret.begin());
     if constexpr (VIsTensor<TFunctionRet>) {
-      std::copy(TFunctionRet::Dimensions.begin(), TFunctionRet::Dimensions.end(), ret.begin() + dims_cut);
+      std::copy(TFunctionRet::Dimensions.begin(), TFunctionRet::Dimensions.end(), ret.begin() + DimsToSkip);
     }
     return ret;
   }
@@ -154,13 +156,16 @@ struct ApplyFunctionResult {
     static constexpr size_t DimensionCount = T::DimensionCount;
   };
 
-  using TFunctionRet = std::invoke_result_t<TFunction, typename TArg::template TSubTensor<DimToStop>>;
+  using TFunctionRet = std::invoke_result_t<
+    TFunction,
+    typename TArgs::template TSubTensor<TArgs::DimensionCount - DimsToSkip>...>;
+
   using TRetData = std::conditional_t<VIsTensor<TFunctionRet>, typename TensorInfo<TFunctionRet>::TData, TFunctionRet>;
   using type = TMakeTensor<TRetData, GetDims()>;
 };
 
-template<size_t DimToStop, class TFunction, CTensor TArg>
-using TApplyFunctionResult = typename ApplyFunctionResult<DimToStop, TFunction, TArg>::type;
+template<size_t DimsToSkip, class TFunction, CTensor... TArgs>
+using TApplyFunctionResult = typename ApplyFunctionResult<DimsToSkip, TFunction, TArgs...>::type;
 
 }  // namespace helpers
 
@@ -463,35 +468,38 @@ constexpr Tensor operator*(typename Tensor::DataType val, const Tensor& other) {
   return Tensor(other) *= val;
 }
 
-template<size_t DimToStop, class TFunction, CTensor Tensor>
+template<size_t DimsToSkip, class TFunction, CTensor Tensor>
 constexpr void ApplyFunctionInplace(TFunction&& function, Tensor& tensor) {
-  static_assert(Tensor::DimensionCount >= DimToStop);
-  if constexpr (Tensor::DimensionCount == DimToStop) {
+  static_assert(Tensor::DimensionCount >= DimsToSkip);
+  if constexpr (Tensor::DimensionCount == DimsToSkip) {
     tensor = function(tensor.Data());
   } else {
     for (size_t i = 0; i < tensor.Size(); ++i) {
-      ApplyFunctionInplace<DimToStop>(function, tensor[i]);
+      ApplyFunctionInplace<DimsToSkip>(function, tensor[i]);
     }
   }
 }
 
-template<size_t DimToStop, class TFunction, CTensor TSourceTensor, class TResult>
-constexpr void ApplyFunction(TFunction&& function, const TSourceTensor& source, TResult& result) {
-  static_assert(DimToStop <= TSourceTensor::DimensionCount);
-  if constexpr (TSourceTensor::DimensionCount == DimToStop) {
-    result = function(source.Data());
+template<size_t DimsToSkip, class TFunction, class TResult, CTensor... TArgs>
+constexpr void ApplyFunctionTo(TFunction&& function, TResult& result, const TArgs&... args) {
+  []<size_t... i>(std::index_sequence<i...>) {
+    static_assert(((DimsToSkip <= std::tuple_element_t<i, std::tuple<TArgs...>>::DimensionCount) && ...));
+  }(std::make_index_sequence<sizeof...(TArgs)>{});
+  if constexpr (DimsToSkip == 0) {
+    result = function(args.Data()...);
   } else {
-    for (size_t i = 0; i < source.Size(); ++i) {
-      ApplyFunction<DimToStop>(function, source[i], result[i]);
+    for (size_t i = 0; i < result.Size(); ++i) {
+      ApplyFunctionTo<DimsToSkip - 1>(function, result[i], args[i]...);
     }
   }
 }
 
-template<size_t DimToStop, class TFunction, CTensor TArg,
-         class TRetTensor = helpers::TApplyFunctionResult<DimToStop, TFunction, TArg>>
-constexpr TRetTensor ApplyFunction(TFunction&& function, const TArg& arg) {
-  TRetTensor result;
-  ApplyFunction<DimToStop>(std::forward<TFunction>(function), arg, result);
+template<size_t DimsToSkip, class TFunction, CTensor... TArgs>
+constexpr helpers::TApplyFunctionResult<DimsToSkip, TFunction, TArgs...>
+  ApplyFunction(TFunction&& function, const TArgs&... args) {
+
+  helpers::TApplyFunctionResult<DimsToSkip, TFunction, TArgs...> result;
+  ApplyFunctionTo<DimsToSkip>(std::forward<TFunction>(function), result, args...);
   return result;
 }
 
