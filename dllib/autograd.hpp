@@ -209,7 +209,7 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
       constexpr bool callable_with_current_variable = std::is_invocable_v<
         decltype(&TOperation::Backward),
         TOperation*,
-        const TVariable<TValue>&,
+        const IVariable<TValue>&,
         decltype(get<i>(args_))...>;
 
       static_assert(pointers_callable || variables_callable || callable_with_current_variable,
