@@ -305,6 +305,23 @@ TVariable<helpers::TMatrixProductResult<T1, T2>> MatrixProduct(const TVariable<T
 }
 
 template<CTensor T>
+TVariable<T> Log(const TVariable<T>& val) {
+  struct TLog {
+    T Forward(const T& val) {
+      return Log(val);
+    }
+
+    void Backward(const T& grad, TVariable<T>& parent) {
+      if (parent->requires_grad) {
+        parent->grad += grad / parent->value;
+      }
+    }
+  };
+
+  return std::make_shared<TOperationNode<TLog, T>>(TLog{}, val);
+}
+
+template<CTensor T>
 auto Sum(const TVariable<T>& val) {
   struct TSum {
     TTensor<typename T::DataType> Forward(const T& val) {
