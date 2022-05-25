@@ -168,7 +168,6 @@ template<class TOperation, CTensor... TArgs>
 struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperation::Forward), TOperation*, TArgs...>> {
   using TValue = std::invoke_result_t<decltype(&TOperation::Forward), TOperation*, TArgs...>;
 
-  using IVariable<TValue>::IVariable;
   using IVariable<TValue>::value;
   using IVariable<TValue>::grad;
   using IVariable<TValue>::requires_grad;
