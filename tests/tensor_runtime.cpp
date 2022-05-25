@@ -19,7 +19,8 @@ static ut::suite tensor_runtime_tests = [] {
       {5, 4, 5, 3},
       {1, 0, 3, 6},
     };
-    "addition"_test = [data1, data2] { // Addition test
+
+    "addition"_test = [data1, data2] {
       constexpr int sum[3][4] = {
         {8,  9, 8,  5},
         {14, 4, 13, 11},
@@ -27,7 +28,8 @@ static ut::suite tensor_runtime_tests = [] {
       };
       expect(eq(Tensor<3, 4>(data1) + Tensor<3, 4>(data2), Tensor<3, 4>(sum)));
     };
-    "subtraction"_test = [data1, data2] { // Subtraction test
+
+    "subtraction"_test = [data1, data2] {
       int diff[3][4] = {
         {0, 5,  -6, 1},
         {4, -4, 3,  5},
@@ -35,7 +37,8 @@ static ut::suite tensor_runtime_tests = [] {
       };
       expect(eq(Tensor<3, 4>(data1) - Tensor<3, 4>(data2), Tensor<3, 4>(diff)));
     };
-    "matrix_multiplication"_test = [data1] { // Matrix multiplication tests
+
+    "matrix_multiplication"_test = [data1] {
       int data3[4][3] = {
         {4, 2, 7},
         {2, 5, 4},
@@ -59,7 +62,8 @@ static ut::suite tensor_runtime_tests = [] {
       expect(eq(dllib::MatrixProductTransposed(Tensor<4, 3>(data3), Tensor<3, 4>(data1).T()), Tensor<4, 4>(mul2)));
     };
   }
-  "matrix_transpose"_test = [] { // Matrix transpose tests
+
+  "matrix_transpose"_test = [] {
     int data[2][3] = {
       {1, 2, 3},
       {4, 5, 6},
@@ -72,7 +76,8 @@ static ut::suite tensor_runtime_tests = [] {
     expect(eq(Tensor<2, 3>(data).T(), Tensor<3, 2>(data_t)));
     expect(eq(Tensor<3, 2>(data_t).T(), Tensor<2, 3>(data)));
   };
-  "sum"_test = [] { // Sum tests
+
+  "sum"_test = [] {
     int data[2][3][2] = {
       {
         {1, 2},
@@ -87,6 +92,7 @@ static ut::suite tensor_runtime_tests = [] {
     };
     expect(eq(Sum(Tensor<2, 3, 2>(data)), 43));
   };
+
   "view"_test = [] {
     int data[2][3][2] = {
       {
@@ -119,6 +125,7 @@ static ut::suite tensor_runtime_tests = [] {
       expect(eq(v2.View<2, 3, 2>(), v1));
     }
   };
+
   "apply_function"_test = [] {
     int data[2][3][2] = {
       {
@@ -166,6 +173,7 @@ static ut::suite tensor_runtime_tests = [] {
       expect(eq(dllib::ApplyFunction<2>(SqLen, t), Tensor<2, 3>(expected)));
     }
   };
+
   "apply_function_with_multiple_arguments"_test = [] {
     int data1[2][3][2] = {
       {

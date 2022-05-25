@@ -15,7 +15,8 @@ using Tensor = dllib::TTensor<int, Dims...>;
       {5, 4, 5, 3},
       {1, 0, 3, 6},
     };
-    { // Addition test
+
+    {  // Addition test
       constexpr int sum[3][4] = {
         {8, 9, 8, 5},
         {14, 4, 13, 11},
@@ -23,7 +24,8 @@ using Tensor = dllib::TTensor<int, Dims...>;
       };
       static_assert(Tensor<3, 4>(data1) + Tensor<3, 4>(data2) == Tensor<3, 4>(sum));
     }
-    { // Subtraction test
+
+    {  // Subtraction test
       constexpr int diff[3][4] = {
         {0, 5, -6, 1},
         {4, -4, 3, 5},
@@ -32,7 +34,8 @@ using Tensor = dllib::TTensor<int, Dims...>;
       static_assert(Tensor<3, 4>(data1) - Tensor<3, 4>(data2) == Tensor<3, 4>(diff));
     }
   }
-  { // Sum tests
+
+  {  // Sum tests
     constexpr int data[2][3][2] = {
       {
         {1, 2},
@@ -47,7 +50,8 @@ using Tensor = dllib::TTensor<int, Dims...>;
     };
     static_assert(Sum(Tensor<2, 3, 2>(data)) == 43);
   }
-  { // ApplyFunction
+
+  {  // ApplyFunction
     constexpr int data[2][3][2] = {
       {
         {1, 2},
@@ -94,6 +98,7 @@ using Tensor = dllib::TTensor<int, Dims...>;
       static_assert(dllib::ApplyFunction<2>(SqLen, t) == Tensor<2, 3>(expected));
     }
   }
+
   {  // ApplyFunction with multiple arguments
     constexpr int data1[2][3][2] = {
       {
