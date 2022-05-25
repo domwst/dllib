@@ -78,15 +78,6 @@ concept CTensorWithDims = VIsTensorWithDims<T, Dims...>;
 
 namespace helpers {
 
-template<class Lambda, int= (Lambda{}(), 0)>
-constexpr bool IsConstexpr(Lambda) {
-  return true;
-}
-
-constexpr bool IsConstexpr(...) {
-  return false;
-}
-
 template<class T>
 concept CHasBeginEnd = requires(const T& value) {
   { std::begin(value) };
@@ -403,11 +394,7 @@ class TTensor<TData, FirstDim, OtherDims...> {
 
   template<class TForwardIt>
   constexpr TTensor& FillWith(TForwardIt begin, TForwardIt end) {
-    if constexpr (helpers::IsConstexpr([&begin, &end]() { return std::distance(begin, end); })) {
-      static_assert(std::distance(begin, end) == FirstDim);
-    } else {
-      assert(std::distance(begin, end) == FirstDim);
-    }
+    assert(std::distance(begin, end) == FirstDim);
     for (size_t i = 0; i < FirstDim; ++i) {
       data_[i] = *begin;
       ++begin;
