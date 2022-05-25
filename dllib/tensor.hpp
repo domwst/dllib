@@ -567,13 +567,13 @@ TTensor<TData, Dim1, Dim3> MatrixProductTransposed(
 }
 
 template<CTensor T>
-T sqrt(T inp) {
+T Sqrt(T inp) {
   ApplyFunctionInplace<0>(static_cast<typename T::DataType (*)(typename T::DataType)>(std::sqrt), inp);
   return inp;
 }
 
 template<CTensor T>
-T log(T inp) {
+T Log(T inp) {
   ApplyFunctionInplace<0>(static_cast<typename T::DataType (*)(typename T::DataType)>(std::log), inp);
   return inp;
 }
