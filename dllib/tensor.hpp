@@ -41,14 +41,6 @@ template<class TData, size_t... Dims>
 struct TIsTensorWithDimsHelper<TTensor<TData, Dims...>, Dims...> : std::true_type {
 };
 
-template<class, class>
-struct TToType;
-
-template<class TDestData, class TData, size_t... Dims>
-struct TToType<TDestData, TTensor<TData, Dims...>> {
-  using type = TTensor<TDestData, Dims...>;
-};
-
 }  // namespace helpers
 
 template<class T>
