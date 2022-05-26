@@ -12,7 +12,7 @@ class IArbitraryOptimizerUnit {
 
   virtual void Dump(std::ostream&) = 0;
 
-  virtual void Load(std::ostream&) = 0;
+  virtual void Load(std::istream&) = 0;
 };
 
 template<CTensor T>
