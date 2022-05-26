@@ -137,10 +137,10 @@ class AdamOptimizerUnit final : public IOptimizerUnit<T> {
     v_ += grad * grad * (1 - beta2_);
     beta2_power_ *= beta2_;
 
-    auto m_hat_ = m_ / (1 - beta1_power_);
-    auto v_hat_ = v_ / (1 - beta2_power_);
+    auto m_hat = m_ / (1 - beta1_power_);
+    auto v_hat = v_ / (1 - beta2_power_);
 
-    variable->value -= m_hat_ / (Sqrt(v_hat_) + eps_) * lr_;
+    variable->value -= m_hat / (Sqrt(v_hat) + eps_) * lr_;
   }
 
   using IOptimizerUnit<T>::variable;
