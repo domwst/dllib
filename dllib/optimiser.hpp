@@ -70,4 +70,60 @@ class MomentumOptimizerUnit final : public IOptimizerUnit<T> {
   T momentum_;
 };
 
+template<CTensor T>
+class AdamOptimizerUnit final : public IOptimizerUnit<T> {
+ private:
+  using TData = typename T::TData;
+
+ public:
+  AdamOptimizerUnit(
+    TVariable<T>& var,
+    TData lr,
+    TData beta1 = 0.9,
+    TData beta2 = 0.999,
+    TData eps = 1e-8)
+    : IOptimizerUnit<T>(var),
+      lr_(lr),
+      beta1_(beta1),
+      beta2_(beta2),
+      eps_(eps),
+      m_(0),
+      v_(0) {
+  }
+
+  void Step() {
+    auto& grad = variable->grad;
+
+    m_ *= beta1_;
+    m_ += grad * (1 - beta1_);
+    beta1_power_ *= beta1_;
+
+    v_ *= beta2_;
+    v_ += grad * grad * (1 - beta2_);
+    beta2_power_ *= beta2_;
+
+    auto m_hat_ = m_ / (1 - beta1_power_);
+    auto v_hat_ = v_ / (1 - beta2_power_);
+
+    variable->value -= m_hat_ / (Sqrt(v_hat_) + eps_) * lr_;
+    ZeroGrad();
+  }
+
+ private:
+
+  using IOptimizerUnit<T>::variable;
+  using IOptimizerUnit<T>::ZeroGrad;
+
+  const TData lr_;
+
+  const typename T::TData beta1_;
+  TData beta1_power_ = 1;
+
+  const TData beta2_;
+  TData beta2_power_ = 1;
+
+  const TData eps_;
+  T m_, v_;
+};
+
 }  // namespace dllib
