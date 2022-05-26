@@ -127,7 +127,7 @@ struct IVariable : public IArbitraryVariable {
     grad.FillWith(0);
   }
 
-  const T value;
+  T value;
   T grad;
 };
 
