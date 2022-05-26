@@ -237,4 +237,39 @@ static ut::suite tensor_runtime_tests = [] {
       !BTensor<2, 3>({{true, false, false}, {false, true, false}}),
        BTensor<2, 3>({{false, true, true},  {true, false, true}})));
   };
+
+  "abs"_test = [] {
+    {
+      Tensor<2, 2> t = {{-1, 2}, {0, -3}};
+      expect(eq(dllib::Abs(t), Tensor<2, 2>({{1, 2}, {0, 3}})));
+    }
+    {
+      FTensor<2, 2> t = {{-1.5, 0.01}, {-0.001, 0}};
+      // It is not correct to compare floating point numbers with ==
+      // But std::abs should change only sign bit, but not the rest of
+      // representation, so I guess it's OK
+      expect(eq(dllib::Abs(t), FTensor<2, 2>({{1.5, 0.01}, {0.001, 0}})));
+    }
+  };
+
+  "all_close"_test = [] {
+    float eps = 1e-4;
+    float eps3 = eps / 2;      // Less than eps
+    float eps4 = 3 * eps / 2;  // Greater than eps
+    FTensor<2, 3> t1 = {{1, 2, 3}, {4, 5, 6}};
+    {
+      FTensor<2, 3> t2 = {
+        {1 + eps3, 2,        3 - eps3},
+        {4,        5 + eps3, 6 - eps3},
+      };
+      expect(AllClose(t1, t2, eps));
+    }
+    {
+      FTensor<2, 3> t2 = {
+        {1, 2,        3},
+        {4, 5 + eps4, 6},
+      };
+      expect(!AllClose(t1, t2, eps));
+    }
+  };
 };

@@ -626,6 +626,17 @@ T Log(T inp) {
 }
 
 template<CTensor T>
+T Abs(T inp) {
+  ApplyFunctionInplace<0>(static_cast<typename T::TData (*)(typename T::TData)>(std::abs), inp);
+  return inp;
+}
+
+template<CTensor T>
+bool AllClose(const T& t1, const T& t2, typename T::TData eps = 1e-6) {
+  return AllOf(Abs(t1 - t2) <= eps);
+}
+
+template<CTensor T>
 constexpr typename T::TData Sum(const T& arg) {
   if constexpr (T::DimensionCount == 0) {
     return arg;
