@@ -406,6 +406,7 @@ class TTensor<TDataType, FirstDim, OtherDims...> {
   }
 
   constexpr bool operator==(const TTensor&) const = default;
+  constexpr bool operator!=(const TTensor&) const = default;
 
  private:
   ContainerType data_;
@@ -459,6 +460,107 @@ constexpr helpers::TApplyFunctionResult<DimsToSkip, TFunction, TArgs...>
   helpers::TApplyFunctionResult<DimsToSkip, TFunction, TArgs...> result;
   ApplyFunctionTo<DimsToSkip>(std::forward<TFunction>(function), result, args...);
   return result;
+}
+
+template<class TDataType, size_t... Dims>
+constexpr TTensor<bool, Dims...> operator<(
+  const TTensor<TDataType, Dims...>& t1,
+  const TTensor<TDataType, Dims...>& t2) {
+
+  return ApplyFunction<sizeof...(Dims)>([](TDataType v1, TDataType v2) {
+    return v1 < v2;
+  }, t1, t2);
+}
+
+template<class TDataType, size_t... Dims>
+constexpr TTensor<bool, Dims...> operator<(
+  const TTensor<TDataType, Dims...>& t,
+  TDataType val) {
+
+  return ApplyFunction<sizeof...(Dims)>([val](TDataType v) {
+    return v < val;
+  }, t);
+}
+
+template<class TDataType, size_t... Dims>
+constexpr TTensor<bool, Dims...> operator>(
+  const TTensor<TDataType, Dims...>& t1,
+  const TTensor<TDataType, Dims...>& t2) {
+
+  return ApplyFunction<sizeof...(Dims)>([](TDataType v1, TDataType v2) {
+    return v1 > v2;
+  }, t1, t2);
+}
+
+template<class TDataType, size_t... Dims>
+constexpr TTensor<bool, Dims...> operator>(
+  const TTensor<TDataType, Dims...>& t,
+  TDataType val) {
+
+  return ApplyFunction<sizeof...(Dims)>([val](TDataType v) {
+    return v > val;
+  }, t);
+}
+
+template<class TDataType, size_t... Dims>
+constexpr TTensor<bool, Dims...> operator<=(
+  const TTensor<TDataType, Dims...>& t1,
+  const TTensor<TDataType, Dims...>& t2) {
+
+  return ApplyFunction<sizeof...(Dims)>([](TDataType v1, TDataType v2) {
+    return v1 <= v2;
+  }, t1, t2);
+}
+
+template<class TDataType, size_t... Dims>
+constexpr TTensor<bool, Dims...> operator<=(
+  const TTensor<TDataType, Dims...>& t,
+  TDataType val) {
+
+  return ApplyFunction<sizeof...(Dims)>([val](TDataType v) {
+    return v <= val;
+  }, t);
+}
+
+template<class TDataType, size_t... Dims>
+constexpr TTensor<bool, Dims...> operator>=(
+  const TTensor<TDataType, Dims...>& t1,
+  const TTensor<TDataType, Dims...>& t2) {
+
+  return ApplyFunction<sizeof...(Dims)>([](TDataType v1, TDataType v2) {
+    return v1 >= v2;
+  }, t1, t2);
+}
+
+template<class TDataType, size_t... Dims>
+constexpr TTensor<bool, Dims...> operator>=(
+  const TTensor<TDataType, Dims...>& t,
+  TDataType val) {
+
+  return ApplyFunction<sizeof...(Dims)>([val](TDataType v) {
+    return v >= val;
+  }, t);
+}
+
+template<size_t... Dims>
+constexpr TTensor<bool, Dims...> operator!(const TTensor<bool, Dims...>& t) {
+  return ApplyFunction<sizeof...(Dims)>([](bool v) {
+    return !v;
+  }, t);
+}
+
+template<size_t... Dims>
+constexpr bool AllOf(const TTensor<bool, Dims...>& t) {
+  if constexpr (sizeof...(Dims) == 0) {
+    return t;
+  } else {
+    for (auto& line : t) {
+      if (!AllOf(line)) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 template<class TData, size_t Dim1, size_t Dim2, size_t Dim3>

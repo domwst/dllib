@@ -6,6 +6,12 @@ namespace ut = boost::ut;
 template<size_t... Dims>
 using Tensor = dllib::TTensor<int, Dims...>;
 
+template<size_t... Dims>
+using BTensor = dllib::TTensor<bool, Dims...>;
+
+template<size_t... Dims>
+using FTensor = dllib::TTensor<float, Dims...>;
+
 static ut::suite tensor_runtime_tests = [] {
   using namespace ut;
   {
@@ -209,5 +215,26 @@ static ut::suite tensor_runtime_tests = [] {
     expect(eq(
       ApplyFunction<2>(scalar_product, Tensor<2, 3, 2>(data1), Tensor<2, 3, 2>(data2)),
       Tensor<2, 3>(expected)));
+  };
+
+  "comparison"_test = [] {
+    Tensor<2, 3> t1({{1, 2, 3}, {4, 5, 6}});
+    Tensor<2, 3> t2({{1, 3, 2}, {6, 5, 4}});
+
+    expect(eq(t1 < t2, BTensor<2, 3>({{false, true, false}, {true, false, false}})));
+    expect(eq(t1 < 5,  BTensor<2, 3>({{true, true, true}, {true, false, false}})));
+
+    expect(eq(t1 > t2, BTensor<2, 3>({{false, false, true}, {false, false, true}})));
+    expect(eq(t1 > 4, BTensor<2, 3>({{false, false, false}, {false, true, true}})));
+
+    expect(eq(t1 <= t2, BTensor<2, 3>({{true, true, false}, {true, true, false}})));
+    expect(eq(t1 <= 4, BTensor<2, 3>({{true, true, true}, {true, false, false}})));
+
+    expect(eq(t1 >= t2, BTensor<2, 3>({{true, false, true}, {false, true, true}})));
+    expect(eq(t1 >= 5, BTensor<2, 3>({{false, false, false}, {false, true, true}})));
+
+    expect(eq(
+      !BTensor<2, 3>({{true, false, false}, {false, true, false}}),
+       BTensor<2, 3>({{false, true, true},  {true, false, true}})));
   };
 };
