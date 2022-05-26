@@ -2,17 +2,25 @@
 
 #include <dllib/tensor.hpp>
 #include <dllib/autograd.hpp>
+#include <dllib/serialization.hpp>
 
 namespace dllib {
 
 class IArbitraryOptimizerUnit {
+ public:
   virtual void ZeroGrad() = 0;
 
-  virtual void Step() = 0;
+  void Step() {
+    StepImpl();
+    ZeroGrad();
+  }
 
-  virtual void Dump(std::ostream&) = 0;
+  virtual void Dump(std::ostream&) const = 0;
 
-  virtual void Load(std::istream&) = 0;
+  virtual void Load(std::istream&) const = 0;
+
+ private:
+  virtual void StepImpl() = 0;
 };
 
 template<CTensor T>
@@ -21,7 +29,7 @@ class IOptimizerUnit : public IArbitraryOptimizerUnit {
   IOptimizerUnit(TVariable<T>& var) : variable(var) {}
 
   void ZeroGrad() final {
-    variable.ZeroGrad();
+    variable->ZeroGrad();
   }
 
  protected:
@@ -34,12 +42,17 @@ class SGDOptimizerUnit final : public IOptimizerUnit<T> {
   SGDOptimizerUnit(TVariable<T>& var, typename T::TData lr) : IOptimizerUnit<T>(var), lr_(lr) {
   }
 
-  void Step() {
-    variable->value -= variable->grad * lr_;
-    variable->ZeroGrad();
+  void Dump(std::ostream&) const final {
+  }
+
+  void Load(std::istream&) const final {
   }
 
  private:
+  void StepImpl() final {
+    variable->value -= variable->grad * lr_;
+  }
+
   using IOptimizerUnit<T>::variable;
   const typename T::TData lr_;
 };
@@ -54,14 +67,21 @@ class MomentumOptimizerUnit final : public IOptimizerUnit<T> {
       momentum_(0) {
   }
 
-  void Step() {
-    momentum_ *= alpha_;
-    momentum_ += variable->grad;
-    variable->value -= momentum_ * lr_;
-    ZeroGrad();
+  void Dump(std::ostream& out) const final {
+    Dump(out, momentum_);
+  }
+
+  void Load(std::istream& in) const final {
+    Load(in, momentum_);
   }
 
  private:
+  void StepImpl() final {
+    momentum_ *= alpha_;
+    momentum_ += variable->grad;
+    variable->value -= momentum_ * lr_;
+  }
+
   using IOptimizerUnit<T>::variable;
   using IOptimizerUnit<T>::ZeroGrad;
 
@@ -91,7 +111,22 @@ class AdamOptimizerUnit final : public IOptimizerUnit<T> {
       v_(0) {
   }
 
-  void Step() {
+  void Dump(std::ostream& out) const final {
+    Dump(out, beta1_power_);
+    Dump(out, beta2_power_);
+    Dump(out, m_);
+    Dump(out, v_);
+  }
+
+  void Load(std::istream& in) const final {
+    Load(in, beta1_power_);
+    Load(in, beta2_power_);
+    Load(in, m_);
+    Load(in, v_);
+  }
+
+ private:
+  void StepImpl() final {
     auto& grad = variable->grad;
 
     m_ *= beta1_;
@@ -106,10 +141,7 @@ class AdamOptimizerUnit final : public IOptimizerUnit<T> {
     auto v_hat_ = v_ / (1 - beta2_power_);
 
     variable->value -= m_hat_ / (Sqrt(v_hat_) + eps_) * lr_;
-    ZeroGrad();
   }
-
- private:
 
   using IOptimizerUnit<T>::variable;
   using IOptimizerUnit<T>::ZeroGrad;
