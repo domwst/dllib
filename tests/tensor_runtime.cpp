@@ -294,4 +294,23 @@ static ut::suite tensor_runtime_tests = [] {
       {1.73205080, 2, 2.23606797},
     })));
   };
+
+  "logical_operators"_test = [] {
+    BTensor<2, 3> t1 = {
+      {false, true, false},
+      {true, false, true},
+    };
+    BTensor<2, 3> t2 = {
+      {false, false, false},
+      {true, true, false},
+    };
+    expect(eq(t1 && t2, BTensor<2, 3>({
+      {false, false, false},
+      {true, false, false},
+    })));
+    expect(eq(t1 || t2, BTensor<2, 3>({
+      {false, true, false},
+      {true, true, true},
+    })));
+  };
 };

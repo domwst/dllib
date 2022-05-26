@@ -550,6 +550,26 @@ constexpr TTensor<bool, Dims...> operator!(const TTensor<bool, Dims...>& t) {
 }
 
 template<size_t... Dims>
+constexpr TTensor<bool, Dims...> operator&&(
+  const TTensor<bool, Dims...>& t1,
+  const TTensor<bool, Dims...>& t2) {
+
+  return ApplyFunction<sizeof...(Dims)>([](bool a, bool b) {
+    return a && b;
+  }, t1, t2);
+}
+
+template<size_t... Dims>
+constexpr TTensor<bool, Dims...> operator||(
+  const TTensor<bool, Dims...>& t1,
+  const TTensor<bool, Dims...>& t2) {
+
+  return ApplyFunction<sizeof...(Dims)>([](bool a, bool b) {
+    return a || b;
+  }, t1, t2);
+}
+
+template<size_t... Dims>
 constexpr bool AllOf(const TTensor<bool, Dims...>& t) {
   if constexpr (sizeof...(Dims) == 0) {
     return t;
