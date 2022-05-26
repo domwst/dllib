@@ -272,4 +272,32 @@ static ut::suite autograd = [] {
     };
     expect(eq(v->grad, TTensor<int, 2, 2>(expected)));
   };
+
+  "sqrt"_test = [] {
+    TVariable<TTensor<float, 2, 3>> v({
+      {1, 2, 3},
+      {4, 5, 6},
+    }, true);
+
+    Sum(Sqrt(v))->Backward();
+    TTensor<float, 2, 3> expected = {
+      {0.5,  0.3535533, 0.2886751},
+      {0.25, 0.2236067, 0.2041241},
+    };
+    expect(AllClose(v->grad, expected));
+  };
+
+  "log"_test = [] {
+    TVariable<TTensor<float, 2, 3>> v({
+      {1, 2, 3},
+      {4, 5, 6},
+    }, true);
+
+    Sum(Log(v))->Backward();
+    TTensor<float, 2, 3> expected = {
+      {1. / 1, 1. / 2, 1. / 3},
+      {1. / 4, 1. / 5, 1. / 6},
+    };
+    expect(AllClose(v->grad, expected));
+  };
 };

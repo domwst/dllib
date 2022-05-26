@@ -272,4 +272,26 @@ static ut::suite tensor_runtime_tests = [] {
       expect(!AllClose(t1, t2, eps));
     }
   };
+
+  "log"_test = [] {
+    FTensor<2, 3> t = {
+      {1, 2, 3},
+      {4, 5, 6},
+    };
+    expect(AllClose(dllib::Log(t), FTensor<2, 3>({
+      {0,           0.693147180, 1.098612288},
+      {1.386294361, 1.609437912, 1.791759469},
+    })));
+  };
+
+  "sqrt"_test = [] {
+    FTensor<2, 3> t = {
+      {0, 1, 2},
+      {3, 4, 5},
+    };
+    expect(AllClose(dllib::Sqrt(t), FTensor<2, 3>({
+      {0,          1, 1.41421356},
+      {1.73205080, 2, 2.23606797},
+    })));
+  };
 };
