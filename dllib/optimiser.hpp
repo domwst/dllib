@@ -56,12 +56,14 @@ class MomentumOptimizerUnit final : public IOptimizerUnit<T> {
 
   void Step() {
     momentum_ *= alpha_;
-    momentum_ += variable->grad * lr_;
-    variable->ZeroGrad();
+    momentum_ += variable->grad;
+    variable->value -= momentum_ * lr_;
+    ZeroGrad();
   }
 
  private:
   using IOptimizerUnit<T>::variable;
+  using IOptimizerUnit<T>::ZeroGrad;
 
   const typename T::TData lr_;
   const typename T::TData alpha_;
