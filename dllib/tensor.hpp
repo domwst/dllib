@@ -55,28 +55,6 @@ template<class T>
 concept CTensor = VIsTensor<T>;
 
 
-template<class T, class TData>
-constexpr bool VIsTensorOfType = helpers::TIsTensorOfTypeHelper<std::remove_cvref_t<T>, TData>::value;
-
-template<class T, class TData>
-struct TIsTensorOfType : std::bool_constant<VIsTensorOfType<T, TData>> {
-};
-
-template<class T, class TData>
-concept CTensorOfType = VIsTensorOfType<T, TData>;
-
-
-template<class T, size_t... Dims>
-constexpr bool VIsTensorWithDims = helpers::TIsTensorWithDimsHelper<std::remove_cvref_t<T>, Dims...>::value;
-
-template<class T, size_t... Dims>
-struct TIsTensorWithDims : std::bool_constant<VIsTensorWithDims<T, Dims...>> {
-};
-
-template<class T, size_t... Dims>
-concept CTensorWithDims = VIsTensorWithDims<T, Dims...>;
-
-
 namespace helpers {
 
 template<class T>
