@@ -48,10 +48,6 @@ template<class T>
 constexpr bool VIsTensor = helpers::TIsTensorHelper<std::remove_cvref_t<T>>::value;
 
 template<class T>
-struct TIsTensor : std::bool_constant<VIsTensor<T>> {
-};
-
-template<class T>
 concept CTensor = VIsTensor<T>;
 
 
