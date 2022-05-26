@@ -44,10 +44,10 @@ struct TVariable : public std::shared_ptr<IVariable<TT>> {
   }
 
   template<size_t... NewDims>
-  TVariable<TTensor<typename TT::DataType, NewDims...>> View() const {
+  TVariable<TTensor<typename TT::TData, NewDims...>> View() const {
     struct TView {
       _Pragma("clang diagnostic ignored \"-Wunused-local-typedef\"")
-      using ConvertedTensor = TTensor<typename TT::DataType, NewDims...>;
+      using ConvertedTensor = TTensor<typename TT::TData, NewDims...>;
       _Pragma("clang diagnostic warning \"-Wunused-local-typedef\"")
 
       ConvertedTensor Forward(const TT& val) {
@@ -349,11 +349,11 @@ TVariable<T> Sqrt(const TVariable<T>& val) {
 template<CTensor T>
 auto Sum(const TVariable<T>& val) {
   struct TSum {
-    TTensor<typename T::DataType> Forward(const T& val) {
+    TTensor<typename T::TData> Forward(const T& val) {
       return Sum(val);
     }
 
-    void Backward(typename T::DataType grad, T* v) {
+    void Backward(typename T::TData grad, T* v) {
       if (v) {
         *v += grad;
       }
