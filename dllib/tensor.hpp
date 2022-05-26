@@ -26,22 +26,6 @@ template<class TData, size_t... Dims>
 struct TIsTensorHelper<TTensor<TData, Dims...>> : std::true_type {
 };
 
-template<class, class>
-struct TIsTensorOfTypeHelper : std::false_type {
-};
-
-template<class TData, size_t... Dims>
-struct TIsTensorOfTypeHelper<TTensor<TData, Dims...>, TData> : std::true_type {
-};
-
-template<class, size_t...>
-struct TIsTensorWithDimsHelper : std::false_type {
-};
-
-template<class TData, size_t... Dims>
-struct TIsTensorWithDimsHelper<TTensor<TData, Dims...>, Dims...> : std::true_type {
-};
-
 }  // namespace helpers
 
 template<class T>
