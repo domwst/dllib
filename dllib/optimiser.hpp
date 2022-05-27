@@ -19,7 +19,7 @@ class IArbitraryOptimizerUnit {
 
   virtual void Load(std::istream&) const = 0;
 
- private:
+ protected:
   virtual void StepImpl() = 0;
 };
 
@@ -48,7 +48,7 @@ class SGDOptimizerUnit final : public IOptimizerUnit<T> {
   void Load(std::istream&) const final {
   }
 
- private:
+ protected:
   void StepImpl() final {
     variable->value -= variable->grad * lr_;
   }
@@ -75,7 +75,7 @@ class MomentumOptimizerUnit final : public IOptimizerUnit<T> {
     Load(in, momentum_);
   }
 
- private:
+ protected:
   void StepImpl() final {
     momentum_ *= alpha_;
     momentum_ += variable->grad;
@@ -125,7 +125,7 @@ class AdamOptimizerUnit final : public IOptimizerUnit<T> {
     Load(in, v_);
   }
 
- private:
+ protected:
   void StepImpl() final {
     auto& grad = variable->grad;
 
