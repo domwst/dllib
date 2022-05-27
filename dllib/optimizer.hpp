@@ -17,7 +17,7 @@ class IArbitraryOptimizerUnit {
 
   virtual void Dump(std::ostream&) const = 0;
 
-  virtual void Load(std::istream&) const = 0;
+  virtual void Load(std::istream&) = 0;
 
  protected:
   virtual void StepImpl() = 0;
@@ -45,7 +45,7 @@ class SGDOptimizerUnit final : public IOptimizerUnit<T> {
   void Dump(std::ostream&) const final {
   }
 
-  void Load(std::istream&) const final {
+  void Load(std::istream&) final {
   }
 
  protected:
@@ -59,8 +59,11 @@ class SGDOptimizerUnit final : public IOptimizerUnit<T> {
 
 template<CTensor T>
 class MomentumOptimizerUnit final : public IOptimizerUnit<T> {
+ private:
+  using TData = typename T::TData;
+
  public:
-  MomentumOptimizerUnit(TVariable<T>& var, typename T::TData lr, typename T::TData alpha)
+  MomentumOptimizerUnit(TVariable<T>& var, TData lr, TData alpha)
     : IOptimizerUnit<T>(var),
       lr_(lr),
       alpha_(alpha),
@@ -68,11 +71,11 @@ class MomentumOptimizerUnit final : public IOptimizerUnit<T> {
   }
 
   void Dump(std::ostream& out) const final {
-    Dump(out, momentum_);
+    dllib::Dump(out, momentum_);
   }
 
-  void Load(std::istream& in) const final {
-    Load(in, momentum_);
+  void Load(std::istream& in) final {
+    dllib::Load(in, momentum_);
   }
 
  protected:
@@ -85,8 +88,8 @@ class MomentumOptimizerUnit final : public IOptimizerUnit<T> {
   using IOptimizerUnit<T>::variable;
   using IOptimizerUnit<T>::ZeroGrad;
 
-  const typename T::TData lr_;
-  const typename T::TData alpha_;
+  const TData lr_;
+  const TData alpha_;
   T momentum_;
 };
 
@@ -112,17 +115,17 @@ class AdamOptimizerUnit final : public IOptimizerUnit<T> {
   }
 
   void Dump(std::ostream& out) const final {
-    Dump(out, beta1_power_);
-    Dump(out, beta2_power_);
-    Dump(out, m_);
-    Dump(out, v_);
+    dllib::Dump(out, beta1_power_);
+    dllib::Dump(out, beta2_power_);
+    dllib::Dump(out, m_);
+    dllib::Dump(out, v_);
   }
 
-  void Load(std::istream& in) const final {
-    Load(in, beta1_power_);
-    Load(in, beta2_power_);
-    Load(in, m_);
-    Load(in, v_);
+  void Load(std::istream& in) final {
+    dllib::Load(in, beta1_power_);
+    dllib::Load(in, beta2_power_);
+    dllib::Load(in, m_);
+    dllib::Load(in, v_);
   }
 
  protected:
