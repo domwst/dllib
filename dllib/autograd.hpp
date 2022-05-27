@@ -38,9 +38,12 @@ template<CTensor TT>
 struct TVariable : public std::shared_ptr<IVariable<TT>> {
   using std::shared_ptr<IVariable<TT>>::shared_ptr;
 
-  // NOLINTNEXTLINE
-  TVariable(const TT& value, bool required_grad = false)
+  TVariable(const TT& value, bool required_grad)
     : std::shared_ptr<IVariable<TT>>(std::make_shared<TLeafNode<TT>>(value, required_grad)) {
+  }
+
+  // NOLINTNEXTLINE
+  TVariable(const TT& value) : TVariable(value, false) {
   }
 
   template<size_t... NewDims>
