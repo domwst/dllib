@@ -1,5 +1,6 @@
 #include <boost/ut.hpp>
 #include <dllib/optimizer.hpp>
+#include <sstream>
 #include <memory>
 
 namespace ut = boost::ut;
@@ -66,27 +67,39 @@ static ut::suite optimizer_tests = [] {
 
   "momentum"_test = [f] {
     TVariable<Tensor<2, 1>> v({{1}, {3}}, true);
-    MomentumOptimizerUnit opt(v, /* lr = */ .1, /* alpha = */ .9);
-
-    f(v)->Backward();
-    opt.Step();
-    expect(AllClose(v->value, Tensor<2, 1>({{0.8}, {1.8}})));
-
-    f(v)->Backward();
-    opt.Step();
-    expect(AllClose(v->value, Tensor<2, 1>({{0.46}, {0}})));
+    std::stringstream ss;
+    {
+      MomentumOptimizerUnit opt(v, /* lr = */ .1, /* alpha = */ .9);
+      f(v)->Backward();
+      opt.Step();
+      expect(AllClose(v->value, Tensor<2, 1>({{0.8}, {1.8}})));
+      Dump(ss, opt);
+    }
+    {
+      MomentumOptimizerUnit opt(v, /* lr = */ .1, /* alpha = */ .9);
+      Load(ss, opt);
+      f(v)->Backward();
+      opt.Step();
+      expect(AllClose(v->value, Tensor<2, 1>({{0.46}, {0}})));
+    }
   };
 
   "adam"_test = [f] {
     TVariable<Tensor<2, 1>> v({{1}, {3}}, true);
-    AdamOptimizerUnit opt(v, /* lr = */ .1, /* beta1 = */ .9, /* beta2 = */ 0.99, /* eps = */ 2e-2);
-
-    f(v)->Backward();
-    opt.Step();
-    expect(AllClose(v->value, Tensor<2, 1>({{0.9009901}, {2.9001663}})));
-
-    f(v)->Backward();
-    opt.Step();
-    expect(AllClose(v->value, Tensor<2, 1>({{0.8024092}, {2.8004302}})));
+    std::stringstream ss;
+    {
+      AdamOptimizerUnit opt(v, /* lr = */ .1, /* beta1 = */ .9, /* beta2 = */ 0.99, /* eps = */ 2e-2);
+      f(v)->Backward();
+      opt.Step();
+      expect(AllClose(v->value, Tensor<2, 1>({{0.9009901}, {2.9001663}})));
+      Dump(ss, opt);
+    }
+    {
+      AdamOptimizerUnit opt(v, /* lr = */ .1, /* beta1 = */ .9, /* beta2 = */ 0.99, /* eps = */ 2e-2);
+      Load(ss, opt);
+      f(v)->Backward();
+      opt.Step();
+      expect(AllClose(v->value, Tensor<2, 1>({{0.8024092}, {2.8004302}})));
+    }
   };
 };
