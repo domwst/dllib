@@ -145,6 +145,28 @@ struct StackAlongResult {
 template<size_t Dim, CTensor T1, CTensor T2>
 using TStackAlongResult = typename StackAlongResult<Dim, T1, T2>::type;
 
+template<size_t Dim, size_t Size, CTensor T>
+struct SplitAlongResult {
+  static consteval std::array<std::array<size_t, T::DimensionCount>, 2> GetDims() {
+    constexpr auto dims = T::Dimensions;
+    static_assert(dims[Dim] > Size);
+
+    auto first_dims = dims;
+    first_dims[Dim] = Size;
+    auto second_dims = dims;
+    second_dims[Dim] -= Size;
+
+    return {first_dims, second_dims};
+  }
+
+  using type = std::pair<
+    TMakeTensor<typename T::TData, GetDims()[0]>,
+    TMakeTensor<typename T::TData, GetDims()[1]>>;
+};
+
+template<size_t Dim, size_t Size, CTensor T>
+using TSplitAlongResult = typename SplitAlongResult<Dim, Size, T>::type;
+
 }  // namespace helpers
 
 template<class TData, std::array Dimensions>
@@ -696,6 +718,29 @@ template<size_t Dim, CTensor T1, CTensor T2>
 auto StackAlong(const T1& a, const T2& b) {
   helpers::TStackAlongResult<Dim, T1, T2> result;
   StackAlongTo<Dim>(result, a, b);
+  return result;
+}
+
+template<size_t Dim, size_t Size, CTensor TRet1, CTensor TRet2, CTensor TSource>
+void SplitAlongTo(TRet1& a, TRet2& b, const TSource& source) {
+  if constexpr (Dim == 0) {
+    for (size_t i = 0; i < Size; ++i) {
+      a[i] = source[i];
+    }
+    for (size_t i = Size; i < source.Size(); ++i) {
+      b[i - Size] = source[i];
+    }
+  } else {
+    for (size_t i = 0; i < source.Size(); ++i) {
+      SplitAlongTo<Dim - 1, Size>(a[i], b[i], source[i]);
+    }
+  }
+}
+
+template<size_t Dim, size_t Size, CTensor T>
+auto SplitAlong(const T& t) {
+  helpers::TSplitAlongResult<Dim, Size, T> result;
+  SplitAlongTo<Dim, Size>(result.first, result.second, t);
   return result;
 }
 
