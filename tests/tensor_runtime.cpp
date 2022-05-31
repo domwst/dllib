@@ -328,4 +328,24 @@ static ut::suite tensor_runtime_tests = [] {
       expect(eq(dllib::StackAlong<1>(t1, t2), expected));
     }
   };
+
+  "split"_test = [] {
+    Tensor<3, 3> t = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+    {
+      Tensor<1, 3> t1;
+      Tensor<2, 3> t2;
+      std::tie(t1, t2) = dllib::SplitAlong<0, 1>(t);
+
+      Tensor<1, 3> expected1 = {{1, 2, 3}};
+      Tensor<2, 3> expected2 = {{4, 5, 6}, {7, 8, 9}};
+      expect(eq(t1, expected1) && eq(t2, expected2));
+    }
+    {
+      auto [t1, t2] = dllib::SplitAlong<1, 2>(t);
+
+      Tensor<3, 2> expected1 = {{1, 2}, {4, 5}, {7, 8}};
+      Tensor<3, 1> expected2 = {{3}, {6}, {9}};
+      expect(eq(t1, expected1) && eq(t2, expected2));
+    }
+  };
 };
