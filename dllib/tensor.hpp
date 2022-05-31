@@ -125,6 +125,26 @@ struct ApplyFunctionResult {
 template<size_t DimsToSkip, class TFunction, CTensor... TArgs>
 using TApplyFunctionResult = typename ApplyFunctionResult<DimsToSkip, TFunction, TArgs...>::type;
 
+template<size_t Dim, CTensor T1, CTensor T2>
+struct StackAlongResult {
+  static consteval std::array<size_t, T1::DimensionCount> GetDims() {
+    static_assert(std::is_same_v<typename T1::TData, typename T2::TData>);
+    static_assert(T1:: DimensionCount == T2::DimensionCount);
+
+    std::array<size_t, T1::DimensionCount> result = T1::Dimensions;
+    result[Dim] += T2::Dimensions[Dim];
+
+    // TODO Static check for dimensions
+
+    return result;
+  }
+
+  using type = TMakeTensor<typename T1::TData, GetDims()>;
+};
+
+template<size_t Dim, CTensor T1, CTensor T2>
+using TStackAlongResult = typename StackAlongResult<Dim, T1, T2>::type;
+
 }  // namespace helpers
 
 template<class TData, std::array Dimensions>
@@ -654,6 +674,29 @@ T Abs(T inp) {
 template<CTensor T>
 bool AllClose(const T& t1, const T& t2, typename T::TData eps = 1e-6) {
   return AllOf(Abs(t1 - t2) <= eps);
+}
+
+template<size_t Dim, CTensor TResult, CTensor T1, CTensor T2>
+void StackAlongTo(TResult& result, const T1& a, const T2& b) {
+  if constexpr (Dim == 0) {
+    for (size_t i = 0; i < a.Size(); ++i) {
+      result[i] = a[i];
+    }
+    for (size_t i = 0; i < b.Size(); ++i) {
+      result[i + a.Size()] = b[i];
+    }
+  } else {
+    for (size_t i = 0; i < result.Size(); ++i) {
+      StackAlongTo<Dim - 1>(result[i], a[i], b[i]);
+    }
+  }
+}
+
+template<size_t Dim, CTensor T1, CTensor T2>
+auto StackAlong(const T1& a, const T2& b) {
+  helpers::TStackAlongResult<Dim, T1, T2> result;
+  StackAlongTo<Dim>(result, a, b);
+  return result;
 }
 
 template<CTensor T>
