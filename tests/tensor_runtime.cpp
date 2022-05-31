@@ -313,4 +313,19 @@ static ut::suite tensor_runtime_tests = [] {
       {true, true, true},
     })));
   };
+
+  "stack"_test = [] {
+    {
+      Tensor<1, 3> t1 = {{1, 2, 3}};
+      Tensor<2, 3> t2 = {{4, 5, 6}, {7, 8, 9}};
+      Tensor<3, 3> expected = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+      expect(eq(dllib::StackAlong<0>(t1, t2), expected));
+    }
+    {
+      Tensor<2, 3> t1 = {{1, 2, 3}, {6, 7, 8}};
+      Tensor<2, 2> t2 = {{4, 5}, {9, 10}};
+      Tensor<2, 5> expected = {{1, 2, 3, 4, 5}, {6, 7, 8, 9, 10}};
+      expect(eq(dllib::StackAlong<1>(t1, t2), expected));
+    }
+  };
 };
