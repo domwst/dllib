@@ -430,11 +430,11 @@ constexpr Tensor operator*(typename Tensor::TData val, const Tensor& other) {
 template<size_t DimsToSkip, class TFunction, CTensor Tensor>
 constexpr void ApplyFunctionInplace(TFunction&& function, Tensor& tensor) {
   static_assert(Tensor::DimensionCount >= DimsToSkip);
-  if constexpr (Tensor::DimensionCount == DimsToSkip) {
+  if constexpr (DimsToSkip == 0) {
     tensor = function(tensor.Data());
   } else {
     for (size_t i = 0; i < tensor.Size(); ++i) {
-      ApplyFunctionInplace<DimsToSkip>(function, tensor[i]);
+      ApplyFunctionInplace<DimsToSkip - 1>(function, tensor[i]);
     }
   }
 }
@@ -635,19 +635,19 @@ TTensor<TData, Dim1, Dim3> MatrixProductTransposed(
 
 template<CTensor T>
 T Sqrt(T inp) {
-  ApplyFunctionInplace<0>(static_cast<typename T::TData (*)(typename T::TData)>(std::sqrt), inp);
+  ApplyFunctionInplace<T::DimensionCount>(static_cast<typename T::TData (*)(typename T::TData)>(std::sqrt), inp);
   return inp;
 }
 
 template<CTensor T>
 T Log(T inp) {
-  ApplyFunctionInplace<0>(static_cast<typename T::TData (*)(typename T::TData)>(std::log), inp);
+  ApplyFunctionInplace<T::DimensionCount>(static_cast<typename T::TData (*)(typename T::TData)>(std::log), inp);
   return inp;
 }
 
 template<CTensor T>
 T Abs(T inp) {
-  ApplyFunctionInplace<0>(static_cast<typename T::TData (*)(typename T::TData)>(std::abs), inp);
+  ApplyFunctionInplace<T::DimensionCount>(static_cast<typename T::TData (*)(typename T::TData)>(std::abs), inp);
   return inp;
 }
 
