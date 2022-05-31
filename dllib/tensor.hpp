@@ -405,9 +405,9 @@ class TTensor<TDataType, FirstDim, OtherDims...> {
     return data_.end();
   }
 
-  template<class T = TTensor>
-  constexpr auto T() const { // FIX HERE
-    helpers::TTransposeResult<T> result;
+  template<class U = TTensor>
+  constexpr std::enable_if_t<U::DimensionCount == 2, helpers::TTransposeResult<U>> T() const {
+    helpers::TTransposeResult<U> result;
     for (size_t i = 0; i < Size(); ++i) {
       for (size_t j = 0; j < data_[i].Size(); ++j) {
         result[j][i] = data_[i][j];
