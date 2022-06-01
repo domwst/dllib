@@ -349,6 +349,32 @@ TVariable<T> Sqrt(const TVariable<T>& val) {
   return std::make_shared<TOperationNode<TSqrt, T>>(TSqrt{}, val);
 }
 
+template<size_t Dim, CTensor T1, CTensor T2>
+TVariable<helpers::TStackAlongResult<Dim, T1, T2>> StackAlong(
+  const TVariable<T1>& v1,
+  const TVariable<T2>& v2) {
+
+  using TStackAlongResult = helpers::TStackAlongResult<Dim, T1, T2>;
+
+  struct TStackAlong {
+    TStackAlongResult Forward(const T1& l, const T2& r) {
+      return StackAlong<Dim>(l, r);
+    }
+
+    void Backward(const TStackAlongResult& grad, T1* l, T2* r) {
+      auto [l_grad, r_grad] = SplitAlong<Dim, T1::Dimensions[Dim]>(grad);
+      if (l) {
+        *l += l_grad;
+      }
+      if (r) {
+        *r += r_grad;
+      }
+    }
+  };
+
+  return std::make_shared<TOperationNode<TStackAlong, T1, T2>>(TStackAlong{}, v1, v2);
+}
+
 template<CTensor T>
 auto Sum(const TVariable<T>& val) {
   struct TSum {
