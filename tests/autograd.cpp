@@ -300,4 +300,15 @@ static ut::suite autograd = [] {
     };
     expect(AllClose(v->grad, expected));
   };
+
+  "stack"_test = [] {
+    TVariable<TTensor<int, 1, 2>> v1({{2, 0}}, true);
+    TVariable<TTensor<int, 1, 2>> v2({{5, 4}}, true);
+
+    auto v = StackAlong<0>(v1, v2);
+    Sum(MatrixProduct(v, v))->Backward();
+
+    TTensor<int, 1, 2> expected1 = {{9, 16}}, expected2 = {{6, 13}};
+    expect(eq(v1->grad, expected1) && eq(v2->grad, expected2));
+  };
 };
