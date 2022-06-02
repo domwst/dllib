@@ -415,16 +415,32 @@ class TTensor<TDataType, FirstDim, OtherDims...> {
     return data_.begin();
   }
 
+  constexpr auto Begin() const {
+    return begin();
+  }
+
   constexpr auto end() const {
     return data_.end();
+  }
+
+  constexpr auto End() const {
+    return end();
   }
 
   constexpr auto begin() {
     return data_.begin();
   }
 
+  constexpr auto Begin() {
+    return begin();
+  }
+
   constexpr auto end() {
     return data_.end();
+  }
+
+  constexpr auto End() {
+    return end();
   }
 
   template<class U = TTensor>
