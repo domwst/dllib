@@ -19,6 +19,8 @@ class IArbitraryOptimizerUnit {
 
   virtual void Load(std::istream&) = 0;
 
+  virtual ~IArbitraryOptimizerUnit() {}
+
  protected:
   virtual void StepImpl() = 0;
 };
@@ -159,6 +161,62 @@ class AdamOptimizerUnit final : public IOptimizerUnit<T> {
 
   const TData eps_;
   T m_, v_;
+};
+
+template<template<CTensor T> class TOptimizer, class... TParams>
+class OptimizerManager {
+ public:
+  OptimizerManager(TParams&&... params)
+    : constructor_parameters_(std::forward<TParams>(params)...) {
+  }
+
+  template<CTensor T>
+  void AddParameter(TVariable<T>& var) {
+    [this, &var]<size_t... i>(std::index_sequence<i...>) {
+      EmplaceOptimizer(var, get<i>(constructor_parameters_)...);
+    }(std::make_index_sequence<sizeof...(TParams)>());
+  }
+
+  template<CTensor... TArgs>
+  void AddParameters(const std::tuple<TVariable<TArgs>&...>& params) {
+    [this, &params]<size_t... i>(std::index_sequence<i...>) {
+      //  Just because compiler thinks "this" is unused
+      this->AddParameter(get<i>(params)...);
+    }(std::make_index_sequence<sizeof...(TArgs)>());
+  }
+
+  template<CTensor T, class... TArgs>
+  void EmplaceOptimizer(TVariable<T>& var, TArgs&&... args) {
+    optimizers_.emplace_back(std::make_unique<TOptimizer<T>>(var, std::forward<TArgs>(args)...));
+  }
+
+  void Dump(std::ostream& out) const {
+    for (auto& opt : optimizers_) {
+      opt->Dump(out);
+    }
+  }
+
+  void Load(std::istream& in) {
+    for (auto& opt : optimizers_) {
+      opt->Load(in);
+    }
+  }
+
+  void ZeroGrad() {
+    for (auto& opt : optimizers_) {
+      opt->ZeroGrad();
+    }
+  }
+
+  void Step() {
+    for (auto& opt : optimizers_) {
+      opt->Step();
+    }
+  }
+
+ private:
+  std::vector<std::unique_ptr<IArbitraryOptimizerUnit>> optimizers_;
+  std::tuple<TParams...> constructor_parameters_;
 };
 
 }  // namespace dllib
