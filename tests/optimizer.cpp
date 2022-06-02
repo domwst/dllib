@@ -61,7 +61,7 @@ static ut::suite optimizer_tests = [] {
 
   auto f = [](const TVariable<Tensor<2, 1>>& v) {
     auto v2 = v * v;
-    auto v3 = MatrixProduct(TVariable(Tensor<1, 2>({{1, 2}})), v2);
+    auto v3 = MatrixProduct(TVariable(Tensor<1, 2>({{1, 2}}), false), v2);
     return v3.View<>();
   };
 

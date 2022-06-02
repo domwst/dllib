@@ -48,10 +48,6 @@ struct TVariable : public std::shared_ptr<IVariable<TT>> {
     : std::shared_ptr<IVariable<TT>>(std::make_shared<TLeafNode<TT>>(value, required_grad)) {
   }
 
-  // NOLINTNEXTLINE
-  TVariable(const TT& value) : TVariable(value, false) {
-  }
-
   template<size_t... NewDims>
   TVariable<TTensor<typename TT::TData, NewDims...>> View() const {
     struct TView {
