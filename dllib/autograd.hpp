@@ -87,6 +87,22 @@ struct TVariable : public std::shared_ptr<IVariable<TT>> {
 
     return std::make_shared<TOperationNode<TTranspose, TT>>(TTranspose{}, *this);
   }
+
+  TVariable operator-() const {
+    struct TNeg {
+      TT Forward(const TT& val) const {
+        return -val;
+      }
+
+      void Backward(const TT& grad, TT* v) {
+        if (v) {
+          *v -= grad;
+        }
+      }
+    };
+
+    return std::make_shared<TOperationNode<TNeg, TT>>(TNeg{}, *this);
+  }
 };
 
 
