@@ -38,6 +38,12 @@ template<CTensor TT>
 struct TVariable : public std::shared_ptr<IVariable<TT>> {
   using std::shared_ptr<IVariable<TT>>::shared_ptr;
 
+  TVariable() : TVariable(false) {
+  }
+
+  explicit TVariable(bool requires_grad) : TVariable(TT{}, requires_grad) {
+  }
+
   TVariable(const TT& value, bool required_grad)
     : std::shared_ptr<IVariable<TT>>(std::make_shared<TLeafNode<TT>>(value, required_grad)) {
   }
