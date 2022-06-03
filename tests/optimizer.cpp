@@ -18,7 +18,7 @@ static ut::suite optimizer_tests = [] {
       {4, 5, 6},
     };
     TVariable v(start, true);
-    SGDOptimizerUnit opt(v, 1);
+    TSGDOptimizerUnit opt(v, 1);
 
     Sum(v * v)->Backward();
     opt.Step();
@@ -35,7 +35,7 @@ static ut::suite optimizer_tests = [] {
       {4, 5, 6},
     };
     TVariable v(start, true);
-    SGDOptimizerUnit opt(v, 1);
+    TSGDOptimizerUnit opt(v, 1);
 
     Sum(Log(v))->Backward();
     opt.Step();
@@ -52,7 +52,7 @@ static ut::suite optimizer_tests = [] {
       {4, 5, 6},
     };
     TVariable v(start, true);
-    SGDOptimizerUnit opt(v, .5);
+    TSGDOptimizerUnit opt(v, .5);
 
     Sum(v * v)->Backward();
     opt.Step();
@@ -69,14 +69,14 @@ static ut::suite optimizer_tests = [] {
     TVariable<Tensor<2, 1>> v({{1}, {3}}, true);
     std::stringstream ss;
     {
-      MomentumOptimizerUnit opt(v, /* lr = */ .1, /* alpha = */ .9);
+      TMomentumOptimizerUnit opt(v, /* lr = */ .1, /* alpha = */ .9);
       f(v)->Backward();
       opt.Step();
       expect(AllClose(v->value, Tensor<2, 1>({{0.8}, {1.8}})));
       Dump(ss, opt);
     }
     {
-      MomentumOptimizerUnit opt(v, /* lr = */ .1, /* alpha = */ .9);
+      TMomentumOptimizerUnit opt(v, /* lr = */ .1, /* alpha = */ .9);
       Load(ss, opt);
       f(v)->Backward();
       opt.Step();
@@ -88,14 +88,14 @@ static ut::suite optimizer_tests = [] {
     TVariable<Tensor<2, 1>> v({{1}, {3}}, true);
     std::stringstream ss;
     {
-      AdamOptimizerUnit opt(v, /* lr = */ .1, /* beta1 = */ .9, /* beta2 = */ 0.99, /* eps = */ 2e-2);
+      TAdamOptimizerUnit opt(v, /* lr = */ .1, /* beta1 = */ .9, /* beta2 = */ 0.99, /* eps = */ 2e-2);
       f(v)->Backward();
       opt.Step();
       expect(AllClose(v->value, Tensor<2, 1>({{0.9009901}, {2.9001663}})));
       Dump(ss, opt);
     }
     {
-      AdamOptimizerUnit opt(v, /* lr = */ .1, /* beta1 = */ .9, /* beta2 = */ 0.99, /* eps = */ 2e-2);
+      TAdamOptimizerUnit opt(v, /* lr = */ .1, /* beta1 = */ .9, /* beta2 = */ 0.99, /* eps = */ 2e-2);
       Load(ss, opt);
       f(v)->Backward();
       opt.Step();

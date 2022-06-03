@@ -39,9 +39,9 @@ class IOptimizerUnit : public IArbitraryOptimizerUnit {
 };
 
 template<CTensor T>
-class SGDOptimizerUnit final : public IOptimizerUnit<T> {
+class TSGDOptimizerUnit final : public IOptimizerUnit<T> {
  public:
-  SGDOptimizerUnit(TVariable<T>& var, typename T::TData lr) : IOptimizerUnit<T>(var), lr_(lr) {
+  TSGDOptimizerUnit(TVariable<T>& var, typename T::TData lr) : IOptimizerUnit<T>(var), lr_(lr) {
   }
 
   void Dump(std::ostream&) const final {
@@ -60,12 +60,12 @@ class SGDOptimizerUnit final : public IOptimizerUnit<T> {
 };
 
 template<CTensor T>
-class MomentumOptimizerUnit final : public IOptimizerUnit<T> {
+class TMomentumOptimizerUnit final : public IOptimizerUnit<T> {
  private:
   using TData = typename T::TData;
 
  public:
-  MomentumOptimizerUnit(TVariable<T>& var, TData lr, TData alpha)
+  TMomentumOptimizerUnit(TVariable<T>& var, TData lr, TData alpha)
     : IOptimizerUnit<T>(var),
       lr_(lr),
       alpha_(alpha),
@@ -96,12 +96,12 @@ class MomentumOptimizerUnit final : public IOptimizerUnit<T> {
 };
 
 template<CTensor T>
-class AdamOptimizerUnit final : public IOptimizerUnit<T> {
+class TAdamOptimizerUnit final : public IOptimizerUnit<T> {
  private:
   using TData = typename T::TData;
 
  public:
-  AdamOptimizerUnit(
+  TAdamOptimizerUnit(
     TVariable<T>& var,
     TData lr,
     TData beta1 = 0.9,
@@ -164,9 +164,9 @@ class AdamOptimizerUnit final : public IOptimizerUnit<T> {
 };
 
 template<template<CTensor T> class TOptimizer, class... TParams>
-class OptimizerManager {
+class TOptimizerManager {
  public:
-  OptimizerManager(TParams&&... params)
+  TOptimizerManager(TParams&&... params)
     : constructor_parameters_(std::forward<TParams>(params)...) {
   }
 
@@ -223,7 +223,7 @@ class OptimizerManager {
 //  template -- either none or all
 template<template<CTensor T> class Optimizer, class... TParams>
 [[nodiscard]] auto MakeOptimizerManager(TParams&&... params) {
-  return OptimizerManager<Optimizer, TParams...>(std::forward<TParams>(params)...);
+  return TOptimizerManager<Optimizer, TParams...>(std::forward<TParams>(params)...);
 }
 
 }  // namespace dllib
