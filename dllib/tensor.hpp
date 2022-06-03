@@ -507,15 +507,14 @@ class TTensor<TDataType, FirstDim, OtherDims...> {
 
  private:
   template<size_t... NewDims>
-  const TTensor<TData, NewDims...>* ViewImpl() const {
+  auto ViewImpl() const {
     static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
     return reinterpret_cast<const TTensor<TData, NewDims...>*>(this);
   }
 
   template<size_t... NewDims>
-  TTensor<TData, NewDims...>* ViewImpl() {
-    static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
-    return reinterpret_cast<TTensor<TData, NewDims...>*>(this);
+  auto ViewImpl() {
+    return const_cast<TTensor<TData, NewDims...>*>(static_cast<const TTensor&>(*this).ViewImpl<NewDims...>());
   }
 
   ContainerType data_;
