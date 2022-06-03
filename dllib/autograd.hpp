@@ -36,6 +36,11 @@ struct TOperationNode;
 
 template<CTensor TT>
 struct TVariable : public std::shared_ptr<IVariable<TT>> {
+ private:
+  template<size_t... NewDims>
+  using ViewResult = std::remove_reference_t<decltype(std::declval<TT>().template View<NewDims...>())>;
+
+ public:
   using std::shared_ptr<IVariable<TT>>::shared_ptr;
 
   TVariable() : TVariable(false) {
@@ -49,10 +54,10 @@ struct TVariable : public std::shared_ptr<IVariable<TT>> {
   }
 
   template<size_t... NewDims>
-  TVariable<TTensor<typename TT::TData, NewDims...>> View() const {
+  [[nodiscard]] TVariable<ViewResult<NewDims...>> View() const {
     struct TView {
       _Pragma("clang diagnostic ignored \"-Wunused-local-typedef\"")
-      using ConvertedTensor = TTensor<typename TT::TData, NewDims...>;
+      using ConvertedTensor = ViewResult<NewDims...>;
       _Pragma("clang diagnostic warning \"-Wunused-local-typedef\"")
 
       ConvertedTensor Forward(const TT& val) {
