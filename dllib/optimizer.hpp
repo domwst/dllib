@@ -166,7 +166,7 @@ class TAdamOptimizerUnit final : public IOptimizerUnit<T> {
 template<template<CTensor T> class TOptimizer, class... TParams>
 class TOptimizerManager {
  public:
-  TOptimizerManager(TParams&&... params)
+  explicit TOptimizerManager(TParams&&... params)
     : constructor_parameters_(std::forward<TParams>(params)...) {
   }
 
