@@ -142,6 +142,36 @@ struct StackAlongResult {
   using type = TMakeTensor<typename T1::TData, GetDims()>;
 };
 
+template<class TContainer, class TValue>
+constexpr size_t Count(const TContainer& container, const TValue& value) {
+  return std::count(container.begin(), container.end(), value);
+}
+
+template<size_t TargetSize, std::array Dimensions>
+consteval decltype(Dimensions) FixViewDimensions() {
+  static_assert(Dimensions.size() >= 1);
+
+  //  Check if there is exactly one -1
+  {
+    constexpr size_t cnt_neg_ones = Count(Dimensions, -1u);
+    static_assert(cnt_neg_ones == 1);
+  }
+
+  constexpr size_t product = []<size_t... i>(std::index_sequence<i...>) {
+    return ((Dimensions[i] == -1u ? size_t(1) : Dimensions[i]) * ...);
+  }(std::make_index_sequence<Dimensions.size()>{});
+  static_assert(TargetSize % product == 0, "Can't deduce dimension size: divisibility check failed");
+  constexpr size_t dimension = TargetSize / product;
+
+  decltype(Dimensions) result = Dimensions;
+  for (auto& x : result) {
+    if (x == -1u) {
+      x = dimension;
+    }
+  }
+  return result;
+}
+
 template<size_t Dim, CTensor T1, CTensor T2>
 using TStackAlongResult = typename StackAlongResult<Dim, T1, T2>::type;
 
@@ -379,15 +409,24 @@ class TTensor<TDataType, FirstDim, OtherDims...> {
   }
 
   template<size_t... NewDims>
-  const TTensor<TData, NewDims...>& View() const {
-    static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
-    return *reinterpret_cast<const TTensor<TData, NewDims...>*>(this);
+  const auto& View() const {
+    if constexpr (sizeof...(NewDims) == 0) {
+      return *ViewImpl<>();
+    } else if constexpr (helpers::Count(std::array{NewDims...}, -1u) == 0) {
+      return *ViewImpl<NewDims...>();
+    } else {
+      constexpr auto fixed_dimensions = helpers::FixViewDimensions<TotalElements, std::array{NewDims...}>();
+      auto ret = [this, &fixed_dimensions]<size_t... i>(std::index_sequence<i...>) {
+        return this->ViewImpl<fixed_dimensions[i]...>();
+      }(std::make_index_sequence<fixed_dimensions.size()>{});
+      return *ret;
+    }
   }
 
   template<size_t... NewDims>
-  TTensor<TData, NewDims...>& View() {
-    static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
-    return *reinterpret_cast<TTensor<TData, NewDims...>*>(this);
+  auto& View() {
+    auto& ret = static_cast<const TTensor&>(*this).View<NewDims...>();
+    return const_cast<std::remove_cvref_t<decltype(ret)>&>(ret);
   }
 
   constexpr TTensor& FillWith(TData val) {
@@ -467,6 +506,18 @@ class TTensor<TDataType, FirstDim, OtherDims...> {
   constexpr bool operator!=(const TTensor&) const = default;
 
  private:
+  template<size_t... NewDims>
+  const TTensor<TData, NewDims...>* ViewImpl() const {
+    static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
+    return reinterpret_cast<const TTensor<TData, NewDims...>*>(this);
+  }
+
+  template<size_t... NewDims>
+  TTensor<TData, NewDims...>* ViewImpl() {
+    static_assert(TTensor<TData, NewDims...>::TotalElements == TotalElements);
+    return reinterpret_cast<TTensor<TData, NewDims...>*>(this);
+  }
+
   ContainerType data_;
 };
 
