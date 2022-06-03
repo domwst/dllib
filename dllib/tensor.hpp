@@ -444,7 +444,7 @@ class TTensor<TDataType, FirstDim, OtherDims...> {
   }
 
   template<class U = TTensor>
-  constexpr std::enable_if_t<U::DimensionCount == 2, helpers::TTransposeResult<U>> T() const {
+  constexpr helpers::TTransposeResult<U> T() const {
     helpers::TTransposeResult<U> result;
     for (size_t i = 0; i < Size(); ++i) {
       for (size_t j = 0; j < data_[i].Size(); ++j) {
