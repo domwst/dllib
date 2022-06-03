@@ -219,4 +219,11 @@ class OptimizerManager {
   std::tuple<TParams...> constructor_parameters_;
 };
 
+//  This is necessary because C++ can't deduce only first argument of class
+//  template -- either none or all
+template<template<CTensor T> class Optimizer, class... TParams>
+[[nodiscard]] auto MakeOptimizerManager(TParams&&... params) {
+  return OptimizerManager<Optimizer, TParams...>(std::forward<TParams>(params)...);
+}
+
 }  // namespace dllib
