@@ -108,6 +108,10 @@ struct TVariable : public std::shared_ptr<IVariable<TT>> {
 
     return std::make_shared<TOperationNode<TNeg, TT>>(TNeg{}, *this);
   }
+
+  std::tuple<TT&, TT&> GetSerializationFields() const {
+    return {(*this)->value, (*this)->grad};
+  }
 };
 
 

@@ -35,6 +35,10 @@ class FullyConnected {
     return {var};
   }
 
+  std::tuple<const TVariable<TTensor<TData, From, To>>&> GetSerializationFields() const {
+    return {var};
+  }
+
  private:
   TVariable<TTensor<TData, From, To>> var{true};
 };

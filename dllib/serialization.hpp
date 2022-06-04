@@ -28,6 +28,11 @@ concept HasLoadPointerMember = requires(T& value, std::istream& in) {
   value->Load(in);
 };
 
+template<class T>
+concept HasSerializationFields = requires(T& value) {
+  value.GetSerializationFields();
+};
+
 } //  namespace helpers
 
 template<helpers::HasDumpMember T>
@@ -56,6 +61,15 @@ void Dump(std::ostream& out, const TTensor<T, Dims...>& tensor) {
   }
 }
 
+template<helpers::HasSerializationFields T>
+void Dump(std::ostream& out, const T& obj) {
+  auto fields = obj.GetSerializationFields();
+  constexpr size_t n = std::tuple_size_v<decltype(fields)>;
+  [&out, &fields]<size_t... i>(std::index_sequence<i...>) {
+    (Dump(out, std::get<i>(fields)),...);
+  }(std::make_index_sequence<n>{});
+}
+
 template<helpers::HasLoadMember T>
 void Load(std::istream& in, T& obj) {
   obj.Load(in);
@@ -80,6 +94,15 @@ void Load(std::istream& in, TTensor<T, Dims...>& tensor) {
       Load(in, x);
     }
   }
+}
+
+template<helpers::HasSerializationFields T>
+void Load(std::istream& in, T& obj) {
+  auto fields = obj.GetSerializationFields();
+  constexpr size_t n = std::tuple_size_v<decltype(fields)>;
+  [&in, &fields]<size_t... i>(std::index_sequence<i...>) {
+    (Load(in, std::get<i>(fields)),...);
+  }(std::make_index_sequence<n>{});
 }
 
 }  // namespace dllib
