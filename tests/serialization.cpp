@@ -87,4 +87,36 @@ static ut::suite serialization_tests = [] {
       expect(eq(t3, t3_local));
     }
   };
+
+  "user_defined_type"_test = [] {
+    struct TTest {
+      int x;
+      double y;
+      TTensor<int, 2, 3> t;
+      int five;
+
+      std::tuple<int&, double&, TTensor<int, 2, 3>&> GetSerializationFields() const {
+        return {
+          const_cast<int&>(x),
+          const_cast<double&>(y),
+          const_cast<TTensor<int, 2, 3>&>(t),
+        };
+      }
+    };
+
+    std::stringstream ss;
+    {
+      TTest t{2, 3.3, {{1, 2, 3}, {4, 5, 6}}, 5};
+      Dump(ss, t);
+    }
+    {
+      TTest t{};
+      expect(eq(t.five, 0));
+      Load(ss, t);
+      expect(eq(t.x, 2) &&
+             eq(t.y, 3.3) &&
+             eq(t.t, TTensor<int, 2, 3>{{1, 2, 3}, {4, 5, 6}}) &&
+             eq(t.five, 0));
+    }
+  };
 };

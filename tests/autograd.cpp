@@ -1,4 +1,6 @@
 #include <dllib/autograd.hpp>
+#include <dllib/serialization.hpp>
+
 #include <boost/ut.hpp>
 
 namespace ut = boost::ut;
@@ -310,5 +312,21 @@ static ut::suite autograd = [] {
 
     TTensor<int, 1, 2> expected1 = {{9, 16}}, expected2 = {{6, 13}};
     expect(eq(v1->grad, expected1) && eq(v2->grad, expected2));
+  };
+
+  "serialization"_test = [] {
+    std::stringstream ss;
+    {
+      TVariable<TTensor<int, 2, 3>> t;
+      t->value = {{1, 2, 3}, {4, 5, 6}};
+      t->grad = {{7, 8, 9}, {10, 11, 12}};
+      Dump(ss, t);
+    }
+    {
+      TVariable<TTensor<int, 2, 3>> t;
+      Load(ss, t);
+      expect(eq(t->value, TTensor<int, 2, 3>{{1, 2, 3}, {4, 5, 6}}) &&
+             eq(t->grad, TTensor<int, 2, 3>{{7, 8, 9}, {10, 11, 12}}));
+    }
   };
 };
