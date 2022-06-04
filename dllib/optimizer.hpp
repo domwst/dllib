@@ -163,6 +163,15 @@ class TAdamOptimizerUnit final : public IOptimizerUnit<T> {
   T m_, v_;
 };
 
+namespace helpers {
+
+template<class T>
+concept HasParameters = requires(T val) {
+  val.GetParameters();
+};
+
+}  // namespace helpers
+
 template<template<CTensor T> class TOptimizer, class... TParams>
 class TOptimizerManager {
  public:
@@ -177,8 +186,13 @@ class TOptimizerManager {
     }(std::make_index_sequence<sizeof...(TParams)>());
   }
 
-  template<CTensor... TArgs>
-  void AddParameters(const std::tuple<TVariable<TArgs>&...>& params) {
+  template<helpers::HasParameters T>
+  void AddParameter(T& val) {
+    AddParameters(val.GetParameters());
+  }
+
+  template<class... TArgs>
+  void AddParameters(const std::tuple<TArgs&...>& params) {
     [this, &params]<size_t... i>(std::index_sequence<i...>) {
       //  Just because compiler thinks "this" is unused
       (this->AddParameter(get<i>(params)),...);
