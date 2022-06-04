@@ -41,6 +41,7 @@ struct TVariable : public std::shared_ptr<IVariable<TT>> {
   using ViewResult = std::remove_reference_t<decltype(std::declval<TT>().template View<NewDims...>())>;
 
  public:
+  using TUnderlying = TT;
   using std::shared_ptr<IVariable<TT>>::shared_ptr;
 
   TVariable() : TVariable(false) {
