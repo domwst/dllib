@@ -9,6 +9,37 @@ static ut::suite autograd = [] {
   using namespace ut;
   using namespace dllib;
 
+  "referencing"_test = [] {
+    TVariable<TTensor<int, 2, 3>> v1({{1, 2, 3}, {4, 5, 6}}, true);
+    auto v2 = v1;
+    v2->value[0][1] += 1;
+    expect(eq(v1->value, v2->value));
+    auto v3 = v2.Copy();
+    v3->value[1][2] += 1;
+    expect(neq(v2->value, v3->value) && eq(v3->requires_grad, true));
+
+    TVariable<TTensor<int, 2, 3>> v4({{1, 2, 3}, {3, 2, 1}}, false);
+    auto v5 = v4.Copy();
+    expect(eq(v4->requires_grad, false) && eq(v5->requires_grad, false));
+  };
+
+  "is_leaf"_test = [] {
+    TVariable<TTensor<int, 2, 3>> v1({{1, 2, 3}, {4, 5, 6}}, true);
+    expect(eq(v1.IsLeaf(), true));
+
+    auto v2 = v1.Copy();
+    expect(eq(v2.IsLeaf(), true));
+
+    auto v3 = v1 + v2;
+    expect(eq(v3.IsLeaf(), false));
+
+    auto v4 = v3;
+    expect(eq(v4.IsLeaf(), false));
+
+    auto v5 = v4.Copy();
+    expect(eq(v5.IsLeaf(), true));
+  };
+
   "sum_all"_test = [] {
     {
       int data[2][3] = {

@@ -53,6 +53,15 @@ struct TVariable : public std::shared_ptr<IVariable<TT>> {
     : std::shared_ptr<IVariable<TT>>(std::make_shared<TLeafNode<TT>>(value, required_grad)) {
   }
 
+  [[nodiscard]] bool IsLeaf() const {
+    auto ptr = dynamic_cast<TLeafNode<TT>*>(std::shared_ptr<IVariable<TT>>::get());
+    return ptr != nullptr;
+  }
+
+  [[nodiscard]] TVariable Copy() const {
+    return TVariable((*this)->value, (*this)->requires_grad);
+  }
+
   template<size_t... NewDims>
   [[nodiscard]] TVariable<ViewResult<NewDims...>> View() const {
     struct TView {
