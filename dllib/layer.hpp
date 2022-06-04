@@ -53,24 +53,59 @@ TVariable<TTensor<TData, BatchSize, FirstDim, OtherDims...>> AddBias(
   return std::make_shared<TOperationNode<TAddBias, T, TBias>>(TAddBias{}, t, bias);
 }
 
-}  // namespace helpers
-
-template<class TData, size_t From, size_t To>
-class FullyConnected {
- public:
-  FullyConnected() : FullyConnected([
+template<class TData>
+auto GetNormalGenerator() {
+  return [
     rnd = std::mt19937(std::random_device{}()),
     distribution = std::normal_distribution<TData>{}]() mutable {
 
     return distribution(rnd);
-  }) {}
+  };
+}
+
+}  // namespace helpers
+
+template<class TData, size_t Dim>
+struct Bias {
+ public:
+  Bias() : Bias(helpers::GetNormalGenerator<TData>()) {
+  }
 
   template<class TGen>
-  explicit FullyConnected(TGen gen) {
-    for (auto& x : var->value.template View<-1u>()) {
+  explicit Bias(TGen gen) {
+    for (auto& x : bias->value) {
       x = gen();
     }
-    for (auto& x : bias->value.template View<-1u>()) {
+  }
+
+  auto operator()(const auto& value) {
+    if constexpr (VIsTensor<decltype(value)>) {
+      return helpers::AddBias(value, bias->value);
+    } else {
+      return helpers::AddBias(value, bias);
+    }
+  }
+
+  auto GetSerializationFields() const {
+    return std::tie(bias);
+  }
+
+  auto GetParameters() {
+    return std::tie(bias);
+  }
+
+ private:
+  TVariable<TTensor<TData, Dim>> bias{true};
+};
+
+template<class TData, size_t From, size_t To>
+class FullyConnected {
+ public:
+  FullyConnected() : FullyConnected(helpers::GetNormalGenerator<TData>()) {}
+
+  template<class TGen>
+  explicit FullyConnected(TGen gen) : bias(gen) {
+    for (auto& x : var->value.template View<-1u>()) {
       x = gen();
     }
   }
@@ -78,25 +113,24 @@ class FullyConnected {
   auto operator()(const auto& value) {
     if constexpr (VIsTensor<decltype(value)>) {
       auto result = MatrixProduct(value, var->value);
-      return helpers::AddBias(result, bias->value);
+      return bias(result);
     } else {
       auto result = MatrixProduct(value, var);
-      return helpers::AddBias(result, bias);
+      return bias(result);
     }
   }
 
-  std::tuple<TVariable<TTensor<TData, From, To>>&, TVariable<TTensor<TData, To>>&> GetParameters() {
-    return {var, bias};
+  auto GetParameters() {
+    return std::tie(var, bias);
   }
 
-  std::tuple<const TVariable<TTensor<TData, From, To>>&, const TVariable<TTensor<TData, To>>&>
-  GetSerializationFields() const {
-    return {var, bias};
+  auto GetSerializationFields() const {
+    return std::tie(var, bias);
   }
 
  private:
   TVariable<TTensor<TData, From, To>> var{true};
-  TVariable<TTensor<TData, To>> bias{true};
+  Bias<TData, To> bias;
 };
 
 }  // namespace dllib
