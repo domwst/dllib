@@ -9,25 +9,27 @@ namespace dllib {
 
 namespace helpers {
 
-template<class TData, size_t BatchSize, size_t... OtherDims>
-TTensor<TData, BatchSize, OtherDims...> AddBias(
-  const TTensor<TData, BatchSize, OtherDims...>& t,
-  const TTensor<TData, OtherDims...>& bias) {
+template<class TData, size_t BatchSize, size_t FirstDim, size_t... OtherDims>
+TTensor<TData, BatchSize, FirstDim, OtherDims...> AddBias(
+  const TTensor<TData, BatchSize, FirstDim, OtherDims...>& t,
+  const TTensor<TData, FirstDim>& bias) {
 
   auto result = t;
-  for (auto& x : result) {
-    x += bias;
+  for (size_t i = 0; i < BatchSize; ++i) {
+    for (size_t j = 0; j < FirstDim; ++j) {
+      result[i][j] += bias[j];
+    }
   }
   return result;
 }
 
-template<class TData, size_t BatchSize, size_t... OtherDims>
-TVariable<TTensor<TData, BatchSize, OtherDims...>> AddBias(
-  const TVariable<TTensor<TData, BatchSize, OtherDims...>>& t,
-  const TVariable<TTensor<TData, OtherDims...>>& bias) {
+template<class TData, size_t BatchSize, size_t FirstDim, size_t... OtherDims>
+TVariable<TTensor<TData, BatchSize, FirstDim, OtherDims...>> AddBias(
+  const TVariable<TTensor<TData, BatchSize, FirstDim, OtherDims...>>& t,
+  const TVariable<TTensor<TData, FirstDim>>& bias) {
 
-  using T = TTensor<TData, BatchSize, OtherDims...>;
-  using TBias = TTensor<TData, OtherDims...>;
+  using T = TTensor<TData, BatchSize, FirstDim, OtherDims...>;
+  using TBias = TTensor<TData, FirstDim>;
 
   struct TAddBias {
     auto Forward(const T& t, const TBias& bias) {
@@ -39,8 +41,10 @@ TVariable<TTensor<TData, BatchSize, OtherDims...>> AddBias(
         *t += grad;
       }
       if (bias) {
-        for (auto& x : grad) {
-          *bias += x;
+        for (size_t i = 0; i < BatchSize; ++i) {
+          for (size_t j = 0; j < FirstDim; ++j) {
+            (*bias)[j] += Sum(grad[i][j]);
+          }
         }
       }
     }
