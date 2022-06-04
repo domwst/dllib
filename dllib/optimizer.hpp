@@ -181,7 +181,7 @@ class TOptimizerManager {
   void AddParameters(const std::tuple<TVariable<TArgs>&...>& params) {
     [this, &params]<size_t... i>(std::index_sequence<i...>) {
       //  Just because compiler thinks "this" is unused
-      this->AddParameter(get<i>(params)...);
+      (this->AddParameter(get<i>(params)),...);
     }(std::make_index_sequence<sizeof...(TArgs)>());
   }
 
