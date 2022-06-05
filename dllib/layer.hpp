@@ -53,14 +53,22 @@ TVariable<TTensor<TData, BatchSize, FirstDim, OtherDims...>> AddBias(
   return std::make_shared<TOperationNode<TAddBias, T, TBias>>(TAddBias{}, t, bias);
 }
 
+std::mt19937 entropy(std::random_device{}());
+
 template<class TData>
 auto GetNormalGenerator() {
   return [
-    rnd = std::mt19937(std::random_device{}()),
+    &rnd = entropy,
     distribution = std::normal_distribution<TData>{}]() mutable {
 
     return distribution(rnd);
   };
+}
+
+template<class TGen, class TDouble>
+bool TossCoin(TGen& gen, TDouble p = 0.5) {
+  std::uniform_real_distribution<TDouble> dist;
+  return dist(gen) < p;
 }
 
 }  // namespace helpers
@@ -72,7 +80,7 @@ struct Bias {
   }
 
   template<class TGen>
-  explicit Bias(TGen gen) {
+  explicit Bias(TGen& gen) {
     for (auto& x : bias->value) {
       x = gen();
     }
