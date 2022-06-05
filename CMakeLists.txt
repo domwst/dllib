@@ -9,11 +9,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
 
 include(cmake/sanitizers.cmake)
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -g -fno-omit-frame-pointer)
+add_compile_options(-Wall -Wextra -Wpedantic -Werror -g -fno-omit-frame-pointer -ffast-math -O2)
+add_link_options(-ffast-math)
 
 add_subdirectory(third_party)
 add_subdirectory(dllib)
 
 if (DLLIB_DEVELOPER)
     add_subdirectory(tests)
+endif()
+
+if (DLLIB_EXAMPLES)
+    add_subdirectory(examples)
 endif()
