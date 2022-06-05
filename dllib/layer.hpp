@@ -141,4 +141,40 @@ class FullyConnected {
   Bias<TData, To> bias;
 };
 
+template<class TDouble = float>
+auto DropOut(const auto& inp, TDouble p = 0.5) {
+  using TInput = std::remove_cvref_t<decltype(inp)>;
+
+  if constexpr (VIsTensor<TInput>) {
+    return inp;
+  } else {
+    using T = typename TInput::TUnderlying;
+    constexpr size_t batch_size = T::Dimensions[0];
+    constexpr size_t channels = T::Dimensions[1];
+
+    auto& gen = helpers::entropy;
+    TTensor<bool, batch_size, channels> alive;
+    for (auto& x : alive.template View<-1u>()) {
+      x = helpers::TossCoin(gen, 1 - p);
+    }
+
+    struct TDropOut {
+      auto Forward(const T& val) {
+        return val * alive_ / (1 - p_);
+      }
+
+      auto Backward(const T& grad, T* inp) {
+        if (inp) {
+          *inp += grad * alive_;
+        }
+      }
+
+      const TTensor<bool, batch_size, channels> alive_;
+      const TDouble p_;
+    };
+
+    return TInput(std::make_shared<TOperationNode<TDropOut, T>>(TDropOut{alive, p}, inp));
+  }
+}
+
 }  // namespace dllib
