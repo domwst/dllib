@@ -22,7 +22,7 @@ void SqrtExample() {
   std::cout << var->grad << std::endl;
 }
 
-size_t FibonacciBenchmark() {
+size_t Benchmark() {
   using TDouble = float;
   using namespace dllib;
 
@@ -67,7 +67,7 @@ int main() {
 //  SqrtExample();
   size_t total_ms = 0;
   for (size_t i = 0; i < 20; ++i) {
-    total_ms += FibonacciBenchmark();
+    total_ms += Benchmark();
   }
   std::cout << total_ms / 20 << std::endl;
 }
