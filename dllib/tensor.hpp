@@ -553,7 +553,7 @@ constexpr void ApplyFunctionTo(TFunction&& function, TResult& result, const TArg
     static_assert(((DimsToSkip <= std::tuple_element_t<i, std::tuple<TArgs...>>::DimensionCount) && ...));
   }(std::make_index_sequence<sizeof...(TArgs)>{});
   if constexpr (DimsToSkip == 0) {
-    result = function(args.Data()...);
+    result = function(args...);
   } else {
     for (size_t i = 0; i < result.Size(); ++i) {
       ApplyFunctionTo<DimsToSkip - 1>(function, result[i], args[i]...);
