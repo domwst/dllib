@@ -348,4 +348,25 @@ static ut::suite tensor_runtime_tests = [] {
       expect(eq(t1, expected1) && eq(t2, expected2));
     }
   };
+
+  "exp"_test = [] {
+    FTensor<2, 2> t = {{1, 2}, {3, 4}};
+    FTensor<2, 2> expected = {{2.71828182, 7.38905609}, {20.08553692, 54.59815003}};
+
+    expect(AllClose(Exp(t), expected));
+  };
+
+  "tanh"_test = [] {
+    FTensor<2, 2> t = {{-1, -2}, {0, 1}};
+    FTensor<2, 2> expected = {{-0.76159415, -0.96402758}, {0, 0.76159415}};
+
+    expect(AllClose(Tanh(t), expected));
+  };
+
+  "sigmoid"_test = [] {
+    FTensor<2, 2> t = {{-1, -2}, {0, 1}};
+    FTensor<2, 2> expected = {{0.26894142, 0.11920292}, {0.5, 0.73105857}};
+
+    expect(AllClose(Sigmoid(t), expected));
+  };
 };

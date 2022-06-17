@@ -360,4 +360,31 @@ static ut::suite autograd = [] {
              eq(t->grad, TTensor<int, 2, 3>{{7, 8, 9}, {10, 11, 12}}));
     }
   };
+
+  "exp"_test = [] {
+    TVariable<TTensor<float, 2, 2>> v({{1, 2}, {3, 4}}, true);
+    auto exp = Exp(v);
+    expect(eq(exp->value, Exp(v->value)));
+    Sum(exp)->Backward();
+    expect(eq(v->grad, exp->value));
+  };
+
+  "tanh"_test = [] {
+    TVariable<TTensor<float, 2, 2>> v({{-1, -2}, {0, 1}}, true);
+    auto tanh = Tanh(v);
+    expect(eq(tanh->value, Tanh(v->value)));
+    Sum(tanh)->Backward();
+    TTensor<float, 2, 2> expected = {{0.41997466, 0.0706508}, {1, 0.4199740}};
+    expect(AllClose(v->grad, expected));
+  };
+
+  "sigmoid"_test = [] {
+    TVariable<TTensor<float, 2, 2>> v({{-1, -2}, {0, 1}}, true);
+    auto sigm = Sigmoid(v);
+    expect(eq(sigm->value, Sigmoid(v->value)));
+    Sum(sigm)->Backward();
+    TTensor<float, 2, 2> expected = {{0.19661197, 0.1049936}, {0.25, 0.19661197}};
+    expect(AllClose(v->grad, expected));
+
+  };
 };

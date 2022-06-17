@@ -429,4 +429,55 @@ auto Sum(const TVariable<T>& val) {
   return std::make_shared<TOperationNode<TSum, T>>(TSum{}, val);
 }
 
+template<CTensor T>
+TVariable<T> Exp(const TVariable<T>& val) {
+  struct TExp {
+    T Forward(const T& val) {
+      return Exp(val);
+    }
+
+    void Backward(const IVariable<T>* current, TVariable<T>& parent) {
+      if (parent->requires_grad) {
+        parent->grad += current->grad * current->value;
+      }
+    }
+  };
+
+  return std::make_shared<TOperationNode<TExp, T>>(TExp{}, val);
+}
+
+template<CTensor T>
+TVariable<T> Tanh(const TVariable<T>& val) {
+  struct TTanh {
+    T Forward(const T& val) {
+      return Tanh(val);
+    }
+
+    void Backward(const IVariable<T>* current, TVariable<T>& parent) {
+      if (parent->requires_grad) {
+        parent->grad += current->grad * (1 - current->value * current->value);
+      }
+    }
+  };
+
+  return std::make_shared<TOperationNode<TTanh, T>>(TTanh{}, val);
+}
+
+template<CTensor T>
+TVariable<T> Sigmoid(const TVariable<T>& val) {
+  struct TSigmoid {
+    T Forward(const T& val) {
+      return Sigmoid(val);
+    }
+
+    void Backward(const IVariable<T>* current, TVariable<T>& parent) {
+      if (parent->requires_grad) {
+        parent->grad += current->grad * current->value * (1 - current->value);
+      }
+    }
+  };
+
+  return std::make_shared<TOperationNode<TSigmoid, T>>(TSigmoid{}, val);
+}
+
 }

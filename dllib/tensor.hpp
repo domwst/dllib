@@ -760,6 +760,26 @@ T Abs(T inp) {
 }
 
 template<CTensor T>
+T Exp(T inp) {
+  ApplyFunctionInplace<T::DimensionCount>(static_cast<typename T::TData (*)(typename T::TData)>(std::exp), inp);
+  return inp;
+}
+
+template<CTensor T>
+T Tanh(T inp) {
+  ApplyFunctionInplace<T::DimensionCount>(static_cast<typename T::TData (*)(typename T::TData)>(std::tanh), inp);
+  return inp;
+}
+
+template<CTensor T>
+T Sigmoid(T inp) {
+  ApplyFunctionInplace<T::DimensionCount>([](typename T::TData x) {
+    return 1 / (1 + exp(-x));
+  }, inp);
+  return inp;
+}
+
+template<CTensor T>
 bool AllClose(const T& t1, const T& t2, typename T::TData eps = 1e-6) {
   return AllOf(Abs(t1 - t2) <= eps);
 }
