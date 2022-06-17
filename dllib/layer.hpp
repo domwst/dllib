@@ -159,13 +159,21 @@ auto DropOut(const auto& inp, TDouble p = 0.5) {
     }
 
     struct TDropOut {
-      auto Forward(const T& val) {
-        return val * alive_ / (1 - p_);
+      auto DropOut(const T& val) {
+        auto multiply = []<CTensor T>(const T& tensor, bool value) {
+          return tensor * value;
+        };
+
+        return ApplyFunction</*DimsToSkip=*/2>(multiply, val, alive_);
       }
 
-      auto Backward(const T& grad, T* inp) {
-        if (inp) {
-          *inp += grad * alive_;
+      auto Forward(const T& val) {
+        return DropOut(val) / (1 - p_);
+      }
+
+      auto Backward(const T& grad, T* parent) {
+        if (parent) {
+          *parent += DropOut(grad);
         }
       }
 
