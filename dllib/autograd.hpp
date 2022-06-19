@@ -10,13 +10,11 @@ namespace dllib {
 
 struct IArbitraryVariable;
 
-using TArbitraryVariable = std::shared_ptr<IArbitraryVariable>;
-
 struct IArbitraryVariable {
   // NOLINTNEXTLINE
   IArbitraryVariable(bool requires_grad) : requires_grad(requires_grad) {}
 
-  [[nodiscard]] virtual std::vector<TArbitraryVariable> GetChildren() const = 0;
+  [[nodiscard]] virtual std::vector<IArbitraryVariable*> GetChildren() const = 0;
 
   virtual void PushGradient() = 0;
 
@@ -136,10 +134,10 @@ struct IVariable : public IArbitraryVariable {
 
   template<class U = T>
   std::enable_if_t<U::DimensionCount == 0, void> Backward() {
-    std::unordered_set<TArbitraryVariable> SubGraph;
-    std::vector<TArbitraryVariable> order;
+    std::unordered_set<IArbitraryVariable*> SubGraph;
+    std::vector<IArbitraryVariable*> order;
 
-    auto dfs = [&SubGraph, &order](auto& self, TArbitraryVariable v) -> void {
+    auto dfs = [&SubGraph, &order](auto& self, IArbitraryVariable* v) -> void {
       SubGraph.insert(v);
       for (auto&& child: v->GetChildren()) {
         if (child->requires_grad && !SubGraph.count(child)) {
@@ -179,7 +177,7 @@ struct TLeafNode final : public IVariable<T> {
   using IVariable<T>::requires_grad;
   using IVariable<T>::ZeroGrad;
 
-  [[nodiscard]] std::vector<TArbitraryVariable> GetChildren() const {
+  [[nodiscard]] std::vector<IArbitraryVariable*> GetChildren() const {
     return {};
   }
 
@@ -226,9 +224,9 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
 
   TOperationNode(TOperationNode&&) noexcept = default;
 
-  [[nodiscard]] std::vector<TArbitraryVariable> GetChildren() const {
-    return [this]<size_t... i>(std::index_sequence<i...>) -> std::vector<TArbitraryVariable>{
-      return { static_pointer_cast<IArbitraryVariable>(get<i>(args_))... };
+  [[nodiscard]] std::vector<IArbitraryVariable*> GetChildren() const {
+    return [this]<size_t... i>(std::index_sequence<i...>) -> std::vector<IArbitraryVariable*>{
+      return { static_cast<IArbitraryVariable*>(get<i>(args_).get())... };
     }(std::make_index_sequence<sizeof...(TArgs)>());
   }
 
