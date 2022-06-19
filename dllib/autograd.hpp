@@ -246,20 +246,34 @@ struct TOperationNode : public IVariable<std::invoke_result_t<decltype(&TOperati
         const TValue&,
         decltype(get<i>(args_))...>;
 
+      constexpr bool callable_with_current_variable_and_parent_gradients = std::is_invocable_v<
+        decltype(&TOperation::Backward),
+        TOperation*,
+        const IVariable<TValue>*,
+        decltype(&(get<i>(args_)->grad))...>;
+
       constexpr bool callable_with_current_variable = std::is_invocable_v<
         decltype(&TOperation::Backward),
         TOperation*,
         const IVariable<TValue>*,
         decltype(get<i>(args_))...>;
 
-      static_assert(pointers_callable || variables_callable || callable_with_current_variable,
-        "TOperation::Backward should be callable either with " \
-        "pointers to tensors or with variables as arguments");
+      static_assert(pointers_callable || variables_callable ||
+                    callable_with_current_variable || callable_with_current_variable_and_parent_gradients,
+        "First argument of TOperation::Backward should be either of type const TTensor& or " \
+        "of type const TVariable*, the rest of arguments should be either pointers to " \
+        "gradients of parents, or references to TVariables of parents");
+
+      static_assert(pointers_callable + variables_callable + callable_with_current_variable +
+                    callable_with_current_variable_and_parent_gradients == 1,
+        "You should implement only one Backward overload");
 
       if constexpr (pointers_callable) {
         operation_.Backward(grad, helpers::GetGradientPointerIfRequired(get<i>(args_))...);
       } else if constexpr (variables_callable) {
         operation_.Backward(grad, get<i>(args_)...);
+      } else if constexpr (callable_with_current_variable_and_parent_gradients) {
+        operation_.Backward(this, helpers::GetGradientPointerIfRequired(get<i>(args_))...);
       } else if constexpr (callable_with_current_variable) {
         operation_.Backward(this, get<i>(args_)...);
       }
@@ -436,9 +450,9 @@ TVariable<T> Exp(const TVariable<T>& val) {
       return Exp(val);
     }
 
-    void Backward(const IVariable<T>* current, TVariable<T>& parent) {
-      if (parent->requires_grad) {
-        parent->grad += current->grad * current->value;
+    void Backward(const IVariable<T>* current, T* parent) {
+      if (parent) {
+        *parent += current->grad * current->value;
       }
     }
   };
@@ -453,9 +467,9 @@ TVariable<T> Tanh(const TVariable<T>& val) {
       return Tanh(val);
     }
 
-    void Backward(const IVariable<T>* current, TVariable<T>& parent) {
-      if (parent->requires_grad) {
-        parent->grad += current->grad * (1 - current->value * current->value);
+    void Backward(const IVariable<T>* current, T* parent) {
+      if (parent) {
+        *parent += current->grad * (1 - current->value * current->value);
       }
     }
   };
@@ -470,9 +484,9 @@ TVariable<T> Sigmoid(const TVariable<T>& val) {
       return Sigmoid(val);
     }
 
-    void Backward(const IVariable<T>* current, TVariable<T>& parent) {
-      if (parent->requires_grad) {
-        parent->grad += current->grad * current->value * (1 - current->value);
+    void Backward(const IVariable<T>* current, T* parent) {
+      if (parent) {
+        *parent += current->grad * current->value * (1 - current->value);
       }
     }
   };
