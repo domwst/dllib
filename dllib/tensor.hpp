@@ -94,7 +94,7 @@ struct ApplyFunctionResult {
   static consteval auto GetDims() {
     using TFirstArg = std::tuple_element_t<0, std::tuple<TArgs...>>;
 
-    std::array<size_t, DimsToSkip + TensorInfo<TRetData>::DimensionCount> ret{};
+    std::array<size_t, DimsToSkip + TensorInfo<TFunctionRet>::DimensionCount> ret{};
     std::copy(TFirstArg::Dimensions.begin(), TFirstArg::Dimensions.begin() + DimsToSkip, ret.begin());
     if constexpr (VIsTensor<TFunctionRet>) {
       std::copy(TFunctionRet::Dimensions.begin(), TFunctionRet::Dimensions.end(), ret.begin() + DimsToSkip);
@@ -118,7 +118,7 @@ struct ApplyFunctionResult {
     TFunction,
     typename TArgs::template TSubTensor<TArgs::DimensionCount - DimsToSkip>...>;
 
-  using TRetData = std::conditional_t<VIsTensor<TFunctionRet>, typename TensorInfo<TFunctionRet>::TData, TFunctionRet>;
+  using TRetData = typename TensorInfo<TFunctionRet>::TData;
   using type = TMakeTensor<TRetData, GetDims()>;
 };
 
